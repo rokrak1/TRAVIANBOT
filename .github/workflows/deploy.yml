@@ -1,0 +1,67 @@
+name: Deploy server to VPS
+
+on:
+  push:
+    branches:
+      - main
+
+jobs:
+  build-and-deploy:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v2
+
+      - name: Create .env file
+        run: |
+          echo "JWT_SECRET=${{ secrets.JWT_SECRET }}" > .env
+          echo "JWT_SERVICE_ROLE=${{ secrets.JWT_SERVICE_ROLE }}" >> .env
+          echo "SUPABASE_URL=${{ secrets.SUPABASE_URL }}" >> .env
+          echo "SUPABASE_ANON_KEY=${{ secrets.SUPABASE_ANON_KEY }}" >> .env
+          echo "PORT=${{ secrets.PORT }}" >> .env
+          echo "ORIGIN=${{ secrets.ORIGIN }}" >> .env
+
+      - name: Check .env file
+        run: |
+          echo "Contents of .env file:"
+          cat .env
+          echo "Listing all files:"
+          ls -la
+
+      - name: Set permissions
+        uses: appleboy/ssh-action@master
+        with:
+          host: ${{ secrets.SERVER_IP }}
+          username: ${{ secrets.SERVER_USER }}
+          password: ${{ secrets.SERVER_PASSWORD }}
+          port: ${{ secrets.SSH_PORT }}
+          script: |
+            chmod -R 777 /home/deployuser/${{ secrets.SERVER_PATH }}
+
+      - name: Copy directory to VPS
+        uses: appleboy/scp-action@master
+
+        with:
+          host: ${{ secrets.SERVER_IP }}
+          username: ${{ secrets.SERVER_USER }}
+          password: ${{ secrets.SERVER_PASSWORD }}
+          port: ${{ secrets.SSH_PORT }}
+          source: "*"
+          target: "${{ secrets.SERVER_PATH }}/"
+          overwrite: true
+          debug: true
+
+      - name: Execute deployment script
+        uses: appleboy/ssh-action@master
+
+        with:
+          host: ${{ secrets.SERVER_IP }}
+          username: ${{ secrets.SERVER_USER }}
+          password: ${{ secrets.SERVER_PASSWORD }}
+          port: ${{ secrets.SSH_PORT }}
+          script: |
+            cd ${{ secrets.SERVER_PATH }}
+            docker stop ${{ secrets.CONTAINER_NAME }} || true
+            docker rm ${{ secrets.CONTAINER_NAME }} || true
+            docker build -t ${{ secrets.CONTAINER_NAME }} .
+            docker run -d --name ${{ secrets.CONTAINER_NAME }} -p ${{ secrets.PORT }}:8000 ${{ secrets.CONTAINER_NAME }}
