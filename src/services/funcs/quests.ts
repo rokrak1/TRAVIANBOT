@@ -17,6 +17,10 @@ export const checkIfDailyQuestCompleted = async (page: Page) => {
         await delay(623, 1120);
         const collectBtn = await page.$(".questButtons button[type='submit']");
         await collectBtn?.click();
+        await page.logger(
+          LoggerLevels.SUCCESS,
+          "Daily quest reward collected."
+        );
       }
     }
     return;
@@ -42,6 +46,7 @@ const takeReward = async (page: Page) => {
   for (let i = 0; i < rewards.length; i++) {
     const collectBtn = await rewards[i].$("button.collect");
     await collectBtn?.click();
+    await page.logger(LoggerLevels.SUCCESS, "Quest reward collected.");
     delay(323, 720);
   }
 };

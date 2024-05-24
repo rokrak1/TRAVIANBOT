@@ -6,9 +6,6 @@ import { LoggerLevels } from "../../config/logger";
 import { Slots } from "../slots/csvSlots";
 import { upgradeFields } from "./fields_builder";
 import { upgradeBuilding } from "./town_builder";
-import { supabase } from "../../config/supabase";
-import { CronJob } from "cron";
-import { CronJobDetails } from "../../utils/CronManager";
 
 const getArrayOfConstructions = async (page: Page): Promise<number[]> => {
   const url = page.url();

@@ -96,4 +96,5 @@ export const upgradeFields = async (
     }
   }
   if (underConstructionNumber > 1) return true;
+  await page.logger(LoggerLevels.INFO, "All fields upgraded. Skipping..");
 };

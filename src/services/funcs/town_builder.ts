@@ -89,6 +89,7 @@ export const upgradeBuilding = async (page: Page, row: CSV_ROW) => {
           await buildingSlot.click();
           await page.waitForNavigation();
           await clickOnUpgradeButton(page);
+          await page.logger(LoggerLevels.SUCCESS, `Building upgraded.`);
           await page.waitForNavigation();
           await delay(200, 600);
           return [false, freezeIndex];
