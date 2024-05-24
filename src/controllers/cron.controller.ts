@@ -10,6 +10,8 @@ import {
   CronIntervals,
   TravianAccountInfo,
 } from "../utils/CronManager";
+import { Worker } from "worker_threads";
+import path from "path";
 
 export const cronManager = new CronManager();
 
@@ -31,7 +33,36 @@ class CronController {
       botId,
       interval,
       async () => {
-        await travianStart(botId, options);
+        const worker = new Worker(
+          path.resolve(__dirname, "../worker/travianWorker.js")
+        );
+
+        worker.on("message", (result) => {
+          if (result.success) {
+            console.log(
+              `Puppeteer task for botId ${botId} completed successfully:`,
+              result.result
+            );
+          } else {
+            console.error(
+              `Error in Puppeteer task for botId ${botId}:`,
+              result.error
+            );
+          }
+        });
+
+        worker.on("error", (error) => {
+          console.error("Worker error:", error);
+        });
+
+        worker.on("exit", (code) => {
+          if (code !== 0) {
+            console.error(`Worker stopped with exit code ${code}`);
+          }
+        });
+
+        // Send data to the worker to start the Puppeteer job
+        worker.postMessage({ botId, options });
       },
       options
     );

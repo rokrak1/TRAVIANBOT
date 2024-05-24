@@ -261,15 +261,22 @@ const findBuilding = async (page: Page, row: CSV_ROW) => {
 
 const getFirstEmptySlot = async (page: Page) => {
   const buildingSlots = await page.$$("#villageContent .buildingSlot");
-  return buildingSlots.find(async (buildingSlot) => {
+
+  for (const buildingSlot of buildingSlots) {
     const attrName = await buildingSlot.evaluate((el) =>
       el.getAttribute("data-name")
     );
     const classNameWallOrRallyPoint = await buildingSlot.evaluate(
       (el) => el.classList.contains("a40") || el.classList.contains("a39")
     );
+
+    console.log(attrName, "attrName", classNameWallOrRallyPoint);
+
     if (attrName === "" && !classNameWallOrRallyPoint) {
+      console.log("Building slot found..", attrName, classNameWallOrRallyPoint);
       return buildingSlot;
     }
-  });
+  }
+
+  return null;
 };
