@@ -159,8 +159,7 @@ export const collectSingleHeroResource = async (
 export const goToClosestAdventureIfExsists = async (page: Page) => {
   await clickNavigationSlot(page, NavigationTypes.ADVENTURES);
   try {
-    await page.waitForSelector("#heroAdventure tr", {
-      visible: true,
+    await page.waitForNavigation({
       timeout: 5000,
     });
   } catch (e) {
@@ -258,7 +257,7 @@ export const levelupHero = async (page: Page) => {
     const strength = await progresses[0].$("button.plus");
     const resources = await progresses.pop()?.$("button.plus");
 
-    const pointsAddedTo = pointsStrength > 5 ? "resources" : "strength";
+    const pointsAddedTo = pointsStrength >= 5 ? "resources" : "strength";
     for (let i = 0; i < availablePoints; i++) {
       if (pointsStrength < 5) {
         console.log("Adding point to strength");

@@ -16,6 +16,7 @@
     "@supabase/supabase-js": "^2.43.2",
     "axios": "^1.7.2",
     "cron": "^3.1.7",
+    "dockerode": "^4.0.2",
     "dotenv": "^16.4.5",
     "fastify": "^4.26.2",
     "https-proxy-agent": "^7.0.4",
@@ -26,6 +27,7 @@
     "user-agents": "^1.1.190"
   },
   "devDependencies": {
+    "@types/dockerode": "^3.3.29",
     "@types/jsonwebtoken": "^9.0.6",
     "@types/node": "^20.12.7",
     "nodemon": "^3.1.0",

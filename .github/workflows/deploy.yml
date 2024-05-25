@@ -20,6 +20,7 @@ jobs:
           echo "SUPABASE_ANON_KEY=${{ secrets.SUPABASE_ANON_KEY }}" >> .env
           echo "PORT=${{ secrets.PORT }}" >> .env
           echo "ORIGIN=${{ secrets.ORIGIN }}" >> .env
+          echo "CONTAINER_NAME=${{ secrets.CONTAINER_NAME }}" >> .env
 
       - name: Check .env file
         run: |
@@ -64,4 +65,4 @@ jobs:
             docker stop ${{ secrets.CONTAINER_NAME }} || true
             docker rm ${{ secrets.CONTAINER_NAME }} || true
             docker build -t ${{ secrets.CONTAINER_NAME }} .
-            docker run -d --name ${{ secrets.CONTAINER_NAME }} -p ${{ secrets.PORT }}:8000 ${{ secrets.CONTAINER_NAME }}
+            docker run -d --restart=always --name ${{ secrets.CONTAINER_NAME }} -p ${{ secrets.PORT }}:8000 ${{ secrets.CONTAINER_NAME }}
