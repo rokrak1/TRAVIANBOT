@@ -66,6 +66,11 @@ const checkFirstTimeGoldActivation = async (page: Page) => {
 
   for (let offerNumber of [0, 1, 2, 3]) {
     const productionBoostOffers = await page.$$(".packageFeatures");
+    if (!productionBoostOffers[offerNumber]) {
+      await page.logger(LoggerLevels.INFO, "No production boost offers found");
+      console.log("No production boost offers found");
+      return;
+    }
     const offerButton = await productionBoostOffers[offerNumber].$("button");
     if (!offerButton) {
       await page.logger(

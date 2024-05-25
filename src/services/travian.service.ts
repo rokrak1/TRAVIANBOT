@@ -112,6 +112,7 @@ export const travianStart = async (
     await delay(3278, 5122);
     await browser.close();
   } catch (e) {
+    await removeUserData(botId);
     console.error(e);
   }
 };
