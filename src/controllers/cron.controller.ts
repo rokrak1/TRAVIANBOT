@@ -153,7 +153,7 @@ class CronController {
           }
         });
 
-        // Send data to the worker to start the Puppeteer job
+        // Send data to the worker to start the Puppeteer job.
         worker.postMessage({ botId, options });
       },
       options
