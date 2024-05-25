@@ -12,6 +12,7 @@ import {
 } from "../utils/CronManager";
 import { Worker } from "worker_threads";
 import path from "path";
+import { supabase } from "../config/supabase";
 
 export const cronManager = new CronManager();
 
@@ -21,6 +22,100 @@ interface StartRequestBody {
   botId: string;
   name: string;
 }
+
+interface Proxy {
+  id: string;
+  proxy_domain: string;
+  proxy_username: string;
+  proxy_password: string;
+  proxy_name: string;
+}
+
+interface BotConfiguration {
+  id: string;
+  travian_username: string;
+  travian_password: string;
+  travian_domain: string;
+  proxies: Proxy;
+}
+
+export interface Bot {
+  id: string;
+  bot_configuration: BotConfiguration;
+  image: string | null;
+  name: string;
+  created_at: string;
+  isRunning?: boolean;
+  interval: string;
+}
+
+export const getSupabaseActiveJobAndStartWorkersWithCron = async () => {
+  const { data, error } = await supabase
+    .from("bots")
+    .select()
+    .eq("should_be_running", true);
+  if (error) {
+    console.error("Error fetching active jobs from supabase", error);
+    return;
+  }
+  if (!data) {
+    console.error("No active jobs found in supabase");
+    return;
+  }
+
+  for (let i = 0; i < data.length; i++) {
+    const bot: Bot = data[i];
+    const options: TravianAccountInfo = {
+      travianDomain: bot.bot_configuration.travian_domain,
+      travianPassword: bot.bot_configuration.travian_password,
+      travianUsername: bot.bot_configuration.travian_username,
+      proxyDomain: bot.bot_configuration.proxies.proxy_domain,
+      proxyPassword: bot.bot_configuration.proxies.proxy_password,
+      proxyUsername: bot.bot_configuration.proxies.proxy_username,
+    };
+
+    cronManager.add(
+      bot.name,
+      bot.id,
+      bot.interval as keyof typeof CronIntervals,
+      async () => {
+        const worker = new Worker(
+          path.resolve(__dirname, "../worker/travianWorker.js")
+        );
+
+        worker.on("message", (result) => {
+          if (result.success) {
+            console.log(
+              `Puppeteer task for botId ${bot.id} completed successfully:`,
+              result.result
+            );
+          } else {
+            console.error(
+              `Error in Puppeteer task for botId ${bot.id}:`,
+              result.error
+            );
+          }
+        });
+
+        worker.on("error", (error) => {
+          console.error("Worker error:", error);
+        });
+
+        worker.on("exit", (code) => {
+          if (code !== 0) {
+            console.error(`Worker stopped with exit code ${code}`);
+          }
+        });
+
+        // Send data to the worker to start the Puppeteer job
+        worker.postMessage({ botId: bot.id, options });
+      },
+      options
+    );
+  }
+};
+
+getSupabaseActiveJobAndStartWorkersWithCron();
 
 @controller("/cron")
 class CronController {
