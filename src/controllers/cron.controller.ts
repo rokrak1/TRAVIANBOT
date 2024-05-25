@@ -52,7 +52,7 @@ export interface Bot {
 export const getSupabaseActiveJobAndStartWorkersWithCron = async () => {
   const { data, error } = await supabase
     .from("bots")
-    .select()
+    .select("*, bot_configuration(*, proxies(*))")
     .eq("should_be_running", true);
   if (error) {
     console.error("Error fetching active jobs from supabase", error);
@@ -62,7 +62,6 @@ export const getSupabaseActiveJobAndStartWorkersWithCron = async () => {
     console.error("No active jobs found in supabase");
     return;
   }
-
   for (let i = 0; i < data.length; i++) {
     const bot: Bot = data[i];
     const options: TravianAccountInfo = {
@@ -114,8 +113,6 @@ export const getSupabaseActiveJobAndStartWorkersWithCron = async () => {
     );
   }
 };
-
-getSupabaseActiveJobAndStartWorkersWithCron();
 
 @controller("/cron")
 class CronController {

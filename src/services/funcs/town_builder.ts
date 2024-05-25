@@ -95,7 +95,7 @@ export const upgradeBuilding = async (page: Page, row: CSV_ROW) => {
               LoggerLevels.ERROR,
               "waiting for navigation failed.."
             );
-            return;
+            return [true, freezeIndex];
           }
           await clickOnUpgradeButton(page);
           await page.logger(LoggerLevels.SUCCESS, `Building upgraded.`);
@@ -106,7 +106,7 @@ export const upgradeBuilding = async (page: Page, row: CSV_ROW) => {
               LoggerLevels.ERROR,
               "waiting for navigation failed.."
             );
-            return;
+            return [true, freezeIndex];
           }
           await delay(200, 600);
           return [false, freezeIndex];
@@ -122,7 +122,7 @@ export const upgradeBuilding = async (page: Page, row: CSV_ROW) => {
               LoggerLevels.ERROR,
               "waiting for navigation failed.."
             );
-            return;
+            return [true, freezeIndex];
           }
 
           const [necessaryResources, forceUpgrade] =
@@ -148,7 +148,7 @@ export const upgradeBuilding = async (page: Page, row: CSV_ROW) => {
               LoggerLevels.ERROR,
               "waiting for navigation failed.."
             );
-            return;
+            return [true, false];
           }
 
           const upgradeFunc = forceUpgrade
@@ -255,7 +255,7 @@ export const upgradeBuilding = async (page: Page, row: CSV_ROW) => {
       await page.waitForNavigation({ timeout: 5000 });
     } catch (e) {
       await page.logger(LoggerLevels.ERROR, "waiting for navigation failed..");
-      return;
+      return [true, false];
     }
     await page.logger(LoggerLevels.SUCCESS, `Building construction started.`);
     const freezeIndex = parseInt(row.level, 10) > 1;

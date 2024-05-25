@@ -16,6 +16,7 @@ import { CronJobDetails, TravianAccountInfo } from "../utils/CronManager";
 import { supabase } from "../config/supabase";
 import fs from "fs";
 import { cronManager } from "../controllers/cron.controller";
+import { sync } from "rimraf";
 
 export const travianStart = async (
   botId: string,
@@ -178,10 +179,11 @@ export const travianStop = async (botId: string) => {
 export const removeUserData = async (botId: string) => {
   const userDataPath = path.join(process.cwd(), "user_data", botId);
   try {
-    fs.rmdirSync(userDataPath, { recursive: true });
-  } catch (e) {
-    console.error(e);
-    return { error: e, status: "500" };
+    await sync(userDataPath);
+    console.log("Directory successfully removed");
+    return { error: null, status: "200" };
+  } catch (error) {
+    console.error(`Failed to remove directory: ${error}`);
+    return { error: error, status: "500" };
   }
-  return { error: null, status: "200" };
 };
