@@ -158,17 +158,7 @@ export const collectSingleHeroResource = async (
 
 export const goToClosestAdventureIfExsists = async (page: Page) => {
   await clickNavigationSlot(page, NavigationTypes.ADVENTURES);
-  try {
-    await page.waitForSelector("#heroAdventure tr", {
-      timeout: 5000,
-    });
-  } catch (e) {
-    await page.logger(
-      LoggerLevels.ERROR,
-      "waiting for #heroAdventure tr failed.."
-    );
-    return;
-  }
+  await delay(800, 1269);
 
   // If there is no advetures available return
   if (await page.$("#heroAdventure .noAdventures")) {
