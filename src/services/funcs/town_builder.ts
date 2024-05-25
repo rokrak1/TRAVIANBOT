@@ -4,6 +4,7 @@ import { NavigationTypes } from "../slots/navigationSlots";
 import { clickNavigationSlot } from "./clicker";
 import {
   checkAllResourcesAndAddThemIfPossible,
+  clickOnExchangeButton,
   clickOnUpgradeButton,
   getAlreadyBuiltBuildings,
 } from "./builder";
@@ -100,8 +101,7 @@ export const upgradeBuilding = async (page: Page, row: CSV_ROW) => {
           await buildingSlot.click();
           await page.waitForNavigation();
 
-          // Check if there are enough resources and add them from hero if possible
-          const necessaryResources =
+          const [necessaryResources, forceUpgrade] =
             await checkAllResourcesAndAddThemIfPossible(
               page,
               NavigationTypes.TOWN
@@ -111,13 +111,19 @@ export const upgradeBuilding = async (page: Page, row: CSV_ROW) => {
             console.log("Not enough resources..");
             return [true, false];
           }
+
           const newBuildingSlots = await getAlreadyBuiltBuildings(page);
           const newBuildingSlot = newBuildingSlots[buildingSlotIndex];
 
           // Start building construction
           await newBuildingSlot.click();
           await page.waitForNavigation();
-          await clickOnUpgradeButton(page);
+
+          const upgradeFunc = forceUpgrade
+            ? clickOnExchangeButton
+            : clickOnUpgradeButton;
+          await upgradeFunc(page);
+
           await page.logger(LoggerLevels.SUCCESS, `Building upgraded.`);
           await page.waitForNavigation({ waitUntil: "networkidle0" });
           return [false, freezeIndex];
@@ -160,11 +166,12 @@ export const upgradeBuilding = async (page: Page, row: CSV_ROW) => {
       const resources = await building.$$eval(".resource .value", (el) =>
         el.map((e) => e.textContent)
       );
-      const necessaryResources = await checkAllResourcesAndAddThemIfPossible(
-        page,
-        NavigationTypes.TOWN,
-        resources
-      );
+      const [necessaryResources, forceUpgrade] =
+        await checkAllResourcesAndAddThemIfPossible(
+          page,
+          NavigationTypes.TOWN,
+          resources
+        );
       if (!necessaryResources) {
         await page.logger(LoggerLevels.INFO, "Not enough resources..");
         console.log("Not enough resources..");
@@ -178,6 +185,19 @@ export const upgradeBuilding = async (page: Page, row: CSV_ROW) => {
         await page.logger(LoggerLevels.ERROR, "Building not found..");
         console.error("ERROR: Building not found..");
         return [true, false];
+      }
+
+      if (forceUpgrade) {
+        const exchangeButton = await building.$("button.exchange");
+        if (!exchangeButton) {
+          console.error("Exchange button not found..");
+          await page.logger(
+            LoggerLevels.ERROR,
+            "Exchange button not found.. $exchangeButton$"
+          );
+          return [true, false];
+        }
+        await clickOnExchangeButton(page, exchangeButton);
       }
     }
 

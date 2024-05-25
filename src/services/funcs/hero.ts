@@ -100,6 +100,10 @@ export const collectSingleHeroResource = async (
   element: ElementHandle<Element>,
   amount?: number
 ) => {
+  if (!element) {
+    await page.logger(LoggerLevels.ERROR, "Hero resource not found");
+    return;
+  }
   element.click();
   await delay(400, 869);
   const inputeSelector = ".dialogVisible #consumableHeroItem input";

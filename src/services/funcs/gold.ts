@@ -1,8 +1,17 @@
 import { Page } from "puppeteer";
 import { delay, parseValue } from "../../utils";
 import { LoggerLevels } from "../../config/logger";
+import { clickNavigationSlot } from "./clicker";
+import { NavigationTypes } from "../slots/navigationSlots";
 
 export const extendGoldPlanAndResources = async (page: Page) => {
+  const url = page.url();
+  if (!url.includes("dorf1")) {
+    await clickNavigationSlot(page, NavigationTypes.RESOURCES);
+  }
+
+  await checkFirstTimeGoldActivation(page);
+
   const goldPlanExtendedOffers = await page.$$(
     "#sidebarBoxInfobox li button.gold"
   );
@@ -41,6 +50,64 @@ export const extendGoldPlanAndResources = async (page: Page) => {
       gold -= parseInt(goldValue);
     }
   }
+};
+
+const checkFirstTimeGoldActivation = async (page: Page) => {
+  const productionBoostButton = await page.$(
+    "button.gold.productionBoostButton"
+  );
+  if (!productionBoostButton) {
+    await page.logger(LoggerLevels.INFO, "No production boost button found");
+    console.log("No production boost button found");
+    return;
+  }
+  await productionBoostButton?.click();
+  await delay(200, 500);
+
+  for (let offerNumber of [0, 1, 2, 3]) {
+    const productionBoostOffers = await page.$$(".packageFeatures");
+    const offerButton = await productionBoostOffers[offerNumber].$("button");
+    if (!offerButton) {
+      await page.logger(
+        LoggerLevels.INFO,
+        "No production boost offer button found"
+      );
+      console.log("No production boost offer button found");
+      continue;
+    }
+    const isActivate = await offerButton.evaluate((el) => {
+      const div = el.querySelector("div");
+      let textContent = "";
+      div!.childNodes.forEach((node) => {
+        if (node.nodeType === Node.TEXT_NODE) {
+          // Check if the node is a text node
+          textContent += node!.textContent!.trim() + " "; // Append text content of the node
+        }
+      });
+      return textContent.trim();
+    });
+    console.log("isActivate", isActivate);
+    if (isActivate == "Activate") {
+      const title = await productionBoostOffers[offerNumber].evaluate((el) => {
+        return el.querySelector(".featureTitle")?.textContent;
+      });
+      console.log(`Activated production boost offer: ${title}`);
+      await page.logger(
+        LoggerLevels.GOLD_SPENT,
+        `Activated production boost offer: ${title}`
+      );
+      await offerButton.click();
+      await delay(800, 1100);
+    }
+  }
+
+  const closeProductionBoostButton = await page.$(
+    ".premiumFeaturePackage div.dialogCancelButton"
+  );
+  console.log("Closing production boost modal", closeProductionBoostButton);
+  await closeProductionBoostButton?.click();
+  await page.logger(LoggerLevels.INFO, "Production boost check completed");
+  await delay(1000, 1300);
 };
 
 const getGoldAndSilver = async (page: Page) => {

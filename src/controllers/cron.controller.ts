@@ -67,7 +67,7 @@ class CronController {
       options
     );
     reply.send({
-      status: `Cron job id ${botId} started with schedule ${CronIntervals.TWO_MINUTES}`,
+      status: `Cron job id ${botId} started with schedule ${CronIntervals[interval]}`,
     });
   }
 
@@ -84,7 +84,11 @@ class CronController {
   async kill(req: FastifyRequest, reply: FastifyReply) {
     const { botId } = req.body as { botId: string };
 
-    cronManager.delete(botId);
+    try {
+      cronManager.delete(botId);
+    } catch (e) {
+      console.error(e);
+    }
 
     // Deletes bot with configuraiton from database
     const { error: tError } = await travianStop(botId);

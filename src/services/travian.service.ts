@@ -118,7 +118,7 @@ export const travianStart = async (
 
 const finishTravianBot = async (page: Page, botId: string) => {
   const currentJob = cronManager.list()[botId];
-  await page.logger(LoggerLevels.INFO, "There are no constructions");
+  await page.logger(LoggerLevels.INFO, "There are no constructions left...");
   const { data, error } = await supabase
     .from("bot")
     .update({ force_stop_reason: "Plan finished" })

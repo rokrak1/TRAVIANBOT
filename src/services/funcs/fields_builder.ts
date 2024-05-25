@@ -5,6 +5,7 @@ import { NavigationTypes } from "../slots/navigationSlots";
 import {
   checkAllResourcesAndAddThemIfPossible,
   clickOnBuildingSlot,
+  clickOnExchangeButton,
   clickOnUpgradeButton,
 } from "./builder";
 import { LoggerLevels } from "../../config/logger";
@@ -75,10 +76,11 @@ export const upgradeFields = async (
         await clickOnBuildingSlot(page, buildingSlot);
 
         // Check if there are enough resources and add them from hero if possible
-        const necessaryResources = await checkAllResourcesAndAddThemIfPossible(
-          page,
-          NavigationTypes.RESOURCES
-        );
+        const [necessaryResources, forceUpgrade] =
+          await checkAllResourcesAndAddThemIfPossible(
+            page,
+            NavigationTypes.RESOURCES
+          );
         if (!necessaryResources) {
           await page.logger(LoggerLevels.INFO, "Not enough resources..");
           console.log("Not enough resources..");
@@ -87,7 +89,11 @@ export const upgradeFields = async (
 
         // Start building construction
         await clickOnBuildingSlot(page, buildingSlot);
-        await clickOnUpgradeButton(page);
+
+        const upgradeFunc = forceUpgrade
+          ? clickOnExchangeButton
+          : clickOnUpgradeButton;
+        await upgradeFunc(page);
         await page.logger(LoggerLevels.SUCCESS, `Field upgraded.`);
         console.log("Field upgraded..");
         await page.waitForNavigation({ waitUntil: "networkidle0" });
