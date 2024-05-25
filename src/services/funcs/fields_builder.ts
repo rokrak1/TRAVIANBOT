@@ -63,7 +63,18 @@ export const upgradeFields = async (
         await clickOnBuildingSlot(page, buildingSlot);
         await clickOnUpgradeButton(page);
         await page.logger(LoggerLevels.SUCCESS, `Field upgraded.`);
-        await page.waitForNavigation({ waitUntil: "networkidle0" });
+        try {
+          await page.waitForNavigation({
+            waitUntil: "networkidle0",
+            timeout: 5000,
+          });
+        } catch (e) {
+          await page.logger(
+            LoggerLevels.ERROR,
+            "waiting for navigation failed.."
+          );
+          return;
+        }
         underConstructionNumber++;
       } else if (isFieldNotNow) {
         console.log(
@@ -96,7 +107,18 @@ export const upgradeFields = async (
         await upgradeFunc(page);
         await page.logger(LoggerLevels.SUCCESS, `Field upgraded.`);
         console.log("Field upgraded..");
-        await page.waitForNavigation({ waitUntil: "networkidle0" });
+        try {
+          await page.waitForNavigation({
+            waitUntil: "networkidle0",
+            timeout: 5000,
+          });
+        } catch (e) {
+          await page.logger(
+            LoggerLevels.ERROR,
+            "waiting for navigation failed.."
+          );
+          return;
+        }
         underConstructionNumber++;
       }
     }

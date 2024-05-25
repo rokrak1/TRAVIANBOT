@@ -8,7 +8,12 @@ export const checkIfDailyQuestCompleted = async (page: Page) => {
   const quest = await page.$(".dailyQuests .indicator");
   if (quest) {
     await clickNavigationSlot(page, NavigationTypes.DAILY_QUESTS);
-    await page.waitForSelector(".pointsAndAchievements");
+    try {
+      await page.waitForSelector(".pointsAndAchievements");
+    } catch (e) {
+      await page.logger(LoggerLevels.ERROR, "waiting for daily quest failed..");
+      return;
+    }
     const achivements = await page.$$(".pointsAndAchievements .achievement");
     for (let achivement of achivements) {
       const isRewardReady = await achivement.$(".rewardReady");
@@ -33,7 +38,15 @@ export const checkIfQuestCompleted = async (page: Page) => {
   const quest = await page.$(".bigSpeechBubble");
   if (quest) {
     await clickNavigationSlot(page, NavigationTypes.QUEST_MASTER);
-    await page.waitForNavigation({ waitUntil: "networkidle0" });
+    try {
+      await page.waitForNavigation({ waitUntil: "networkidle0" });
+    } catch (e) {
+      await page.logger(
+        LoggerLevels.ERROR,
+        "waiting for quest completed failed.."
+      );
+      return;
+    }
     await takeReward(page);
     return;
   }

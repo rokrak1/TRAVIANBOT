@@ -77,7 +77,12 @@ export const getAvailableHeroResources = async (
 
 export const collectAllHeroResources = async (page: Page) => {
   await clickNavigationSlot(page, NavigationTypes.HERO);
-  await page.waitForNavigation({ waitUntil: "networkidle0" });
+  try {
+    await page.waitForNavigation({ waitUntil: "networkidle0", timeout: 5000 });
+  } catch (e) {
+    await page.logger(LoggerLevels.ERROR, "waiting for navigation failed..");
+    return;
+  }
 
   const heroResources = await getAvailableHeroResources(page);
   await collectAllResources(
@@ -107,7 +112,18 @@ export const collectSingleHeroResource = async (
   element.click();
   await delay(400, 869);
   const inputeSelector = ".dialogVisible #consumableHeroItem input";
-  await page.waitForSelector(inputeSelector, { visible: true });
+  try {
+    await page.waitForSelector(inputeSelector, {
+      visible: true,
+      timeout: 5000,
+    });
+  } catch (e) {
+    await page.logger(
+      LoggerLevels.ERROR,
+      `waiting for ${inputeSelector}  failed..`
+    );
+    return;
+  }
   const inputValue = await page.$eval(inputeSelector, (el) => el.value);
 
   // Dont transfer resources if input is less then 10
@@ -142,7 +158,18 @@ export const collectSingleHeroResource = async (
 
 export const goToClosestAdventureIfExsists = async (page: Page) => {
   await clickNavigationSlot(page, NavigationTypes.ADVENTURES);
-  await page.waitForSelector("#heroAdventure tr", { visible: true });
+  try {
+    await page.waitForSelector("#heroAdventure tr", {
+      visible: true,
+      timeout: 5000,
+    });
+  } catch (e) {
+    await page.logger(
+      LoggerLevels.ERROR,
+      "waiting for #heroAdventure tr failed.."
+    );
+    return;
+  }
 
   // If there is no advetures available return
   if (await page.$("#heroAdventure .noAdventures")) {
@@ -185,13 +212,34 @@ export const levelupHero = async (page: Page) => {
     // Go to hero
     await clickNavigationSlot(page, NavigationTypes.HERO);
     await delay(400, 869);
-    await page.waitForSelector(".scrollingContainer", { visible: true });
-
+    try {
+      await page.waitForSelector(".scrollingContainer", {
+        visible: true,
+        timeout: 5000,
+      });
+    } catch (e) {
+      await page.logger(
+        LoggerLevels.ERROR,
+        "waiting for .scrollingContainer failed.."
+      );
+      return;
+    }
     // Go to attributes
     const tabs = await page.$$(".scrollingContainer .content");
     const attributes = tabs[1];
     await attributes.click();
-    await page.waitForSelector(".heroAttributes", { visible: true });
+    try {
+      await page.waitForSelector(".heroAttributes", {
+        visible: true,
+        timeout: 5000,
+      });
+    } catch (e) {
+      await page.logger(
+        LoggerLevels.ERROR,
+        "waiting for .heroAttributes failed.."
+      );
+      return;
+    }
 
     // Get progress bars
     const progresses = await page.$$(".heroAttributes .progressBar");

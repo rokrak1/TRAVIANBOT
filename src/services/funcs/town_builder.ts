@@ -88,10 +88,26 @@ export const upgradeBuilding = async (page: Page, row: CSV_ROW) => {
         if (isFieldGoodToUpgrade) {
           // Start building upgrade
           await buildingSlot.click();
-          await page.waitForNavigation();
+          try {
+            await page.waitForNavigation({ timeout: 5000 });
+          } catch (e) {
+            await page.logger(
+              LoggerLevels.ERROR,
+              "waiting for navigation failed.."
+            );
+            return;
+          }
           await clickOnUpgradeButton(page);
           await page.logger(LoggerLevels.SUCCESS, `Building upgraded.`);
-          await page.waitForNavigation();
+          try {
+            await page.waitForNavigation({ timeout: 5000 });
+          } catch (e) {
+            await page.logger(
+              LoggerLevels.ERROR,
+              "waiting for navigation failed.."
+            );
+            return;
+          }
           await delay(200, 600);
           return [false, freezeIndex];
         } else if (isFieldNotNow) {
@@ -99,7 +115,15 @@ export const upgradeBuilding = async (page: Page, row: CSV_ROW) => {
             "Building is not good to upgrade.. Checking resources..."
           );
           await buildingSlot.click();
-          await page.waitForNavigation();
+          try {
+            await page.waitForNavigation({ timeout: 5000 });
+          } catch (e) {
+            await page.logger(
+              LoggerLevels.ERROR,
+              "waiting for navigation failed.."
+            );
+            return;
+          }
 
           const [necessaryResources, forceUpgrade] =
             await checkAllResourcesAndAddThemIfPossible(
@@ -117,7 +141,15 @@ export const upgradeBuilding = async (page: Page, row: CSV_ROW) => {
 
           // Start building construction
           await newBuildingSlot.click();
-          await page.waitForNavigation();
+          try {
+            await page.waitForNavigation({ timeout: 5000 });
+          } catch (e) {
+            await page.logger(
+              LoggerLevels.ERROR,
+              "waiting for navigation failed.."
+            );
+            return;
+          }
 
           const upgradeFunc = forceUpgrade
             ? clickOnExchangeButton
@@ -125,7 +157,10 @@ export const upgradeBuilding = async (page: Page, row: CSV_ROW) => {
           await upgradeFunc(page);
 
           await page.logger(LoggerLevels.SUCCESS, `Building upgraded.`);
-          await page.waitForNavigation({ waitUntil: "networkidle0" });
+          await page.waitForNavigation({
+            waitUntil: "networkidle0",
+            timeout: 5000,
+          });
           return [false, freezeIndex];
         }
       } else {
@@ -216,7 +251,12 @@ export const upgradeBuilding = async (page: Page, row: CSV_ROW) => {
 
     // Start building construction
     await buildingConstructionButton.click();
-    await page.waitForNavigation();
+    try {
+      await page.waitForNavigation({ timeout: 5000 });
+    } catch (e) {
+      await page.logger(LoggerLevels.ERROR, "waiting for navigation failed..");
+      return;
+    }
     await page.logger(LoggerLevels.SUCCESS, `Building construction started.`);
     const freezeIndex = parseInt(row.level, 10) > 1;
     freezeIndex &&
@@ -240,7 +280,12 @@ const openEmptySlotAndBuild = async (
   const path = await firstEmptySlot.$("path");
   if (path) {
     await path.click();
-    await page.waitForNavigation();
+    try {
+      await page.waitForNavigation({ timeout: 5000 });
+    } catch (e) {
+      await page.logger(LoggerLevels.ERROR, "waiting for navigation failed..");
+      return;
+    }
   }
   await delay(200, 600);
 
@@ -261,7 +306,12 @@ const findBuilding = async (page: Page, row: CSV_ROW) => {
   const tabs = await page.$$(".scrollingContainer a");
   for (let tab of tabs) {
     await tab.click();
-    await page.waitForNetworkIdle();
+    try {
+      await page.waitForNetworkIdle({ timeout: 5000 });
+    } catch (e) {
+      await page.logger(LoggerLevels.ERROR, "waiting for navigation failed..");
+      return;
+    }
     await delay(200, 600);
     const buildingList = await page.$$(".buildingWrapper");
     const building = buildingList.find(async (building) => {

@@ -68,7 +68,16 @@ export const travianStart = async (
     if (!firstPage) {
       // Login
       await login(page, travianUsername, travianPassword);
-      await page.waitForNavigation({ waitUntil: "networkidle0" });
+      try {
+        await page.waitForNavigation({ waitUntil: "networkidle0" });
+      } catch (e) {
+        console.log("wait for navigation failed");
+        await page.logger(
+          LoggerLevels.ERROR,
+          "waiting for navigation failed.."
+        );
+        return;
+      }
     }
 
     const firstStepsArray = [

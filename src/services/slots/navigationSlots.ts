@@ -1,5 +1,6 @@
 import { Page } from "puppeteer";
 import { delay } from "../../utils";
+import { LoggerLevels } from "../../config/logger";
 
 export enum NavigationTypes {
   RESOURCES = "resources",
@@ -18,14 +19,35 @@ export enum NavigationTypes {
 export const navigationSlots = {
   [NavigationTypes.RESOURCES]: async (page: Page) => {
     await page.click("#navigation .village.resourceView");
-    await page.waitForSelector("#resourceFieldContainer");
+    try {
+      await page.waitForSelector("#resourceFieldContainer");
+    } catch (e) {
+      await page.logger(
+        LoggerLevels.ERROR,
+        "waiting for #resourceFieldContainer failed.."
+      );
+      return;
+    }
   },
   [NavigationTypes.TOWN]: async (page: Page) => {
     await page.click("#navigation .village.buildingView");
-    await page.waitForSelector("#villageContent");
+    try {
+      await page.waitForSelector("#villageContent");
+    } catch (e) {
+      await page.logger(
+        LoggerLevels.ERROR,
+        "waiting for #villageContent failed.."
+      );
+      return;
+    }
   },
   [NavigationTypes.MAP]: async (page: Page) => {
-    await page.waitForSelector("a.map", { visible: true });
+    try {
+      await page.waitForSelector("a.map", { visible: true });
+    } catch (e) {
+      await page.logger(LoggerLevels.ERROR, "waiting for a.map failed..");
+      return;
+    }
     await page.click("a.map");
   },
   [NavigationTypes.STATISTICS]: async (page: Page) => {

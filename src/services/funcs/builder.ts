@@ -63,7 +63,13 @@ export const clickOnExchangeButton = async (
     return;
   }
   await npcButton.click();
-  await page.waitForNavigation();
+  try {
+    await page.waitForNavigation({ timeout: 5000 });
+  } catch (e) {
+    console.log("wait for navigation failed");
+    await page.logger(LoggerLevels.ERROR, "waiting for navigation failed..");
+    return;
+  }
 
   await clickOnUpgradeButton(page);
 };
@@ -102,7 +108,13 @@ export const clickOnBuildingSlot = async (
     return;
   }
   await buildingSlotSelector(page);
-  await page.waitForSelector("#build");
+  try {
+    await page.waitForSelector("#build", { timeout: 5000 });
+  } catch (e) {
+    console.log("wait for navigation failed");
+    await page.logger(LoggerLevels.ERROR, "waiting for #build failed..");
+    return;
+  }
 };
 
 export const checkAllResourcesAndAddThemIfPossible = async (
@@ -126,7 +138,13 @@ export const checkAllResourcesAndAddThemIfPossible = async (
 
   // Get hero resources
   await clickNavigationSlot(page, NavigationTypes.HERO);
-  await page.waitForNavigation({ waitUntil: "networkidle0" });
+  try {
+    await page.waitForNavigation({ waitUntil: "networkidle0", timeout: 5000 });
+  } catch (e) {
+    console.log("wait for navigation failed");
+    await page.logger(LoggerLevels.ERROR, "waiting for navigation failed..");
+    return [false, false];
+  }
   const heroResources = await getAvailableHeroResources(page);
   const { wood: hWood, clay: hClay, iron: hIron, crop: hCrop } = heroResources;
 
