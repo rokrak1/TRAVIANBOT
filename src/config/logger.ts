@@ -27,4 +27,5 @@ export enum LoggerLevels {
   ERROR = "error",
   SUCCESS = "success",
   GOLD_SPENT = "gold_spent",
+  PROTECTION = "protection",
 }

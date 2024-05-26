@@ -10,9 +10,8 @@ import {
   CronIntervals,
   TravianAccountInfo,
 } from "../utils/CronManager";
-import { Worker } from "worker_threads";
-import path from "path";
 import { supabase } from "../config/supabase";
+import { addCronJob } from "../services/cron.service";
 
 export const cronManager = new CronManager();
 
@@ -72,45 +71,7 @@ export const getSupabaseActiveJobAndStartWorkersWithCron = async () => {
       proxyPassword: bot.bot_configuration.proxies.proxy_password,
       proxyUsername: bot.bot_configuration.proxies.proxy_username,
     };
-
-    cronManager.add(
-      bot.name,
-      bot.id,
-      bot.interval as keyof typeof CronIntervals,
-      async () => {
-        const worker = new Worker(
-          path.resolve(__dirname, "../worker/travianWorker.js")
-        );
-
-        worker.on("message", (result) => {
-          if (result.success) {
-            console.log(
-              `Puppeteer task for botId ${bot.id} completed successfully:`,
-              result.result
-            );
-          } else {
-            console.error(
-              `Error in Puppeteer task for botId ${bot.id}:`,
-              result.error
-            );
-          }
-        });
-
-        worker.on("error", (error) => {
-          console.error("Worker error:", error);
-        });
-
-        worker.on("exit", (code) => {
-          if (code !== 0) {
-            console.error(`Worker stopped with exit code ${code}`);
-          }
-        });
-
-        // Send data to the worker to start the Puppeteer job
-        worker.postMessage({ botId: bot.id, options });
-      },
-      options
-    );
+    await addCronJob(cronManager, bot, options);
   }
 };
 
@@ -120,44 +81,16 @@ class CronController {
   async start(req: FastifyRequest, reply: FastifyReply) {
     const { options, interval, botId, name } = req.body as StartRequestBody;
 
-    cronManager.add(
-      name,
-      botId,
-      interval,
-      async () => {
-        const worker = new Worker(
-          path.resolve(__dirname, "../worker/travianWorker.js")
-        );
+    if (process.env.DEV_MODE) {
+      await travianStart(botId, options);
+    } else {
+      await addCronJob(
+        cronManager,
+        { id: botId, name, interval } as Bot,
+        options
+      );
+    }
 
-        worker.on("message", (result) => {
-          if (result.success) {
-            console.log(
-              `Puppeteer task for botId ${botId} completed successfully:`,
-              result.result
-            );
-          } else {
-            console.error(
-              `Error in Puppeteer task for botId ${botId}:`,
-              result.error
-            );
-          }
-        });
-
-        worker.on("error", (error) => {
-          console.error("Worker error:", error);
-        });
-
-        worker.on("exit", (code) => {
-          if (code !== 0) {
-            console.error(`Worker stopped with exit code ${code}`);
-          }
-        });
-
-        // Send data to the worker to start the Puppeteer job.
-        worker.postMessage({ botId, options });
-      },
-      options
-    );
     reply.send({
       status: `Cron job id ${botId} started with schedule ${CronIntervals[interval]}`,
     });

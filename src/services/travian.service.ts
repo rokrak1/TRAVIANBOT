@@ -12,11 +12,12 @@ import {
 import { clickNavigationSlot } from "./funcs/clicker";
 import { extendGoldPlanAndResources } from "./funcs/gold";
 import { LoggerLevels, createLogger } from "../config/logger";
-import { CronJobDetails, TravianAccountInfo } from "../utils/CronManager";
+import { TravianAccountInfo } from "../utils/CronManager";
 import { supabase } from "../config/supabase";
 import fs from "fs";
 import { cronManager } from "../controllers/cron.controller";
 import { sync } from "rimraf";
+import { extendProtection } from "./funcs/protection";
 
 export const travianStart = async (
   botId: string,
@@ -32,6 +33,7 @@ export const travianStart = async (
   try {
     // Launch Browser
     const browser = await puppeteer.launch({
+      ...(process.env.DEV_MODE && { headless: false }),
       userDataDir: `./user_data/${botId}`,
       args: [
         `--window-size=1280,1024`,
@@ -101,6 +103,8 @@ export const travianStart = async (
 
     // Extend gold plan and resources
     await extendGoldPlanAndResources(page);
+
+    await extendProtection(page);
 
     // Start building by plan
     const plan = await parseCSV(path.join(process.cwd(), "src", "plan.csv"));

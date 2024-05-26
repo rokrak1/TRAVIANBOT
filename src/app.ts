@@ -8,7 +8,9 @@ const start = async () => {
       port: parseInt(process.env.PORT || "8000"),
       host: "0.0.0.0",
     });
-    await getSupabaseActiveJobAndStartWorkersWithCron();
+
+    !process.env.DEV_MODE &&
+      (await getSupabaseActiveJobAndStartWorkersWithCron());
 
     console.log(`Server running at ${str}`);
   } catch (err) {
