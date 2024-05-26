@@ -25,7 +25,10 @@ export async function serverLogger(
   message: string,
   additionalInfo?: object
 ) {
-  console.log(`${level}: ${message}`);
+  if (process.env.DEV_MODE) {
+    console.log(`${level}: ${message}`);
+    return;
+  }
   const { error } = await supabase.from("server_logs").insert([
     {
       level,
