@@ -6,7 +6,7 @@ export function createLogger(botId: string) {
     message: string,
     additionalInfo?: object
   ) {
-    const { data, error } = await supabase.from("bot_logs").insert([
+    const { error } = await supabase.from("bot_logs").insert([
       {
         bot_id: botId,
         level,
@@ -19,6 +19,24 @@ export function createLogger(botId: string) {
       console.error("Error logging to database:", error);
     }
   };
+}
+export async function serverLogger(
+  level: string,
+  message: string,
+  additionalInfo?: object
+) {
+  console.log(`${level}: ${message}`);
+  const { error } = await supabase.from("server_logs").insert([
+    {
+      level,
+      message,
+      additional_info: additionalInfo || {},
+    },
+  ]);
+
+  if (error) {
+    console.error("Error logging to database:", error);
+  }
 }
 
 export enum LoggerLevels {

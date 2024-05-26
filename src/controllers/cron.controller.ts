@@ -12,6 +12,7 @@ import {
 } from "../utils/CronManager";
 import { supabase } from "../config/supabase";
 import { addCronJob } from "../services/cron.service";
+import { LoggerLevels, serverLogger } from "../config/logger";
 
 export const cronManager = new CronManager();
 
@@ -83,6 +84,10 @@ class CronController {
 
     if (process.env.DEV_MODE) {
       await travianStart(botId, options);
+      await serverLogger(
+        LoggerLevels.INFO,
+        `Cron job started for botId ${botId}`
+      );
     } else {
       await addCronJob(
         cronManager,
@@ -101,7 +106,7 @@ class CronController {
     const { botId } = req.body as { botId: string };
 
     cronManager.stop(botId);
-
+    await serverLogger(LoggerLevels.INFO, `Cron job ${botId} stopped`);
     reply.send({ status: `Cron job ${botId} stopped` });
   }
 
@@ -113,11 +118,20 @@ class CronController {
       cronManager.delete(botId);
     } catch (e) {
       console.error(e);
+      await serverLogger(
+        LoggerLevels.ERROR,
+        `Error deleting cron job ${botId}`
+      );
     }
+    await serverLogger(LoggerLevels.INFO, `Cron job ${botId} removed`);
 
     // Deletes bot with configuraiton from database
     const { error: tError } = await travianStop(botId);
     if (tError) {
+      await serverLogger(
+        LoggerLevels.ERROR,
+        `Bot (${botId}) data not wiped from supabase`
+      );
       reply.code(500).send({
         status: `Cron job ${botId} removed, bot removed but data not wiped`,
       });
@@ -126,11 +140,19 @@ class CronController {
     // Removes bot user_data from server
     const { error } = await removeUserData(botId);
     if (error) {
+      await serverLogger(
+        LoggerLevels.ERROR,
+        `Bot (${botId}) user data not wiped from server`
+      );
       reply.code(500).send({
         status: `Cron job ${botId} removed, bot removed but data not wiped`,
       });
     }
 
+    await serverLogger(
+      LoggerLevels.SUCCESS,
+      `Successfully removed bot ${botId} and data wiped`
+    );
     reply.send({
       status: `Cron job ${botId} removed, bot removed and data wiped`,
     });

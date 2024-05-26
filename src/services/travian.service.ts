@@ -11,7 +11,7 @@ import {
 } from "./funcs/quests";
 import { clickNavigationSlot } from "./funcs/clicker";
 import { extendGoldPlanAndResources } from "./funcs/gold";
-import { LoggerLevels, createLogger } from "../config/logger";
+import { LoggerLevels, createLogger, serverLogger } from "../config/logger";
 import { TravianAccountInfo } from "../utils/CronManager";
 import { supabase } from "../config/supabase";
 import fs from "fs";
@@ -127,6 +127,7 @@ export const travianStart = async (
     await browser.close();
   } catch (e) {
     await removeUserData(botId);
+    await serverLogger(LoggerLevels.ERROR, `Error starting bot: ${e}`);
     console.error(e);
   }
 };
@@ -148,7 +149,7 @@ const finishTravianBot = async (page: Page, botId: string) => {
   try {
     await currentJob.cron.stop();
   } catch (e) {
-    await page.logger(LoggerLevels.ERROR, "Error stopping cron job");
+    await serverLogger(LoggerLevels.ERROR, `Error stopping cron job: ${e}`);
     return;
   }
 
@@ -188,6 +189,10 @@ export const removeUserData = async (botId: string) => {
     return { error: null, status: "200" };
   } catch (error) {
     console.error(`Failed to remove directory: ${error}`);
+    await serverLogger(
+      LoggerLevels.ERROR,
+      `Failed to remove directory: ${error}`
+    );
     return { error: error, status: "500" };
   }
 };

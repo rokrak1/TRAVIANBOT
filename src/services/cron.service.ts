@@ -6,6 +6,7 @@ import {
   TravianAccountInfo,
 } from "../utils/CronManager";
 import { Worker } from "worker_threads";
+import { LoggerLevels, serverLogger } from "../config/logger";
 
 export const addCronJob = async (
   cronManager: CronManager,
@@ -47,6 +48,10 @@ export const addCronJob = async (
 
       // Send data to the worker to start the Puppeteer job
       worker.postMessage({ botId: bot.id, options });
+      await serverLogger(
+        LoggerLevels.INFO,
+        `Cron job started for botId ${bot.id}`
+      );
     },
     options
   );
