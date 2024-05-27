@@ -30,9 +30,10 @@ export const travianStart = async (
     proxyPassword,
   }: TravianAccountInfo
 ) => {
+  let browser;
   try {
     // Launch Browser
-    const browser = await puppeteer.launch({
+    browser = await puppeteer.launch({
       ...(process.env.DEV_MODE && { headless: false }),
       userDataDir: `./user_data/${botId}`,
       args: [
@@ -127,11 +128,15 @@ export const travianStart = async (
 
     // Close browser
     await delay(3278, 5122);
-    await browser.close();
   } catch (e) {
     await removeUserData(botId);
     await serverLogger(LoggerLevels.ERROR, `Error starting bot: ${e}`);
     console.error(e);
+    // Make sure to close the browser even if there is an error
+  } finally {
+    if (browser) {
+      await browser.close();
+    }
   }
 };
 
