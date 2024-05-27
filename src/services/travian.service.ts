@@ -40,6 +40,9 @@ export const travianStart = async (
         `--proxy-server=${proxyDomain}`,
         "--no-sandbox",
         "--disabled-setupid-sandbox",
+        // These flags are needed so there is launched only single process, otherwise application disconnects from chrome but keeps it running in the background
+        "--no-zygote",
+        "--single-process",
       ],
       defaultViewport: {
         width: 1280,
