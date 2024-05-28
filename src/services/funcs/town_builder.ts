@@ -8,7 +8,6 @@ import {
   clickOnUpgradeButton,
   getAlreadyBuiltBuildings,
 } from "./builder";
-import { rSlots } from "../slots/resourcesSlots";
 import { LoggerLevels } from "../../config/logger";
 import { Slots } from "../slots/csvSlots";
 

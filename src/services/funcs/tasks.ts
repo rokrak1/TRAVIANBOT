@@ -66,6 +66,7 @@ export const startBuildingByPlan = async (page: Page, plan: CSV_ROW[]) => {
     );
     if (endLoop) {
       earlyBreak = true;
+      await page.logger(LoggerLevels.INFO, "End loop");
       break;
     }
     await delay(400, 1400);

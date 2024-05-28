@@ -30,7 +30,7 @@ export const addCronJob = async (
           );
           worker.terminate().then(async () => {
             await serverLogger(
-              LoggerLevels.ERROR,
+              LoggerLevels.SUCCESS,
               `Worker for botId ${bot.id} terminated successfully.`
             );
             console.log(`Worker for botId ${bot.id} terminated successfully.`);
