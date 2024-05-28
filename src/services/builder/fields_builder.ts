@@ -1,7 +1,7 @@
 import { Page } from "puppeteer";
 import { CSV_ROW, delay } from "../../utils";
-import { clickNavigationSlot } from "./clicker";
-import { NavigationTypes } from "../slots/navigationSlots";
+import { clickNavigationSlot } from "../actions/clicker";
+import { NavigationTypes } from "./navigationSlots";
 import {
   checkAllResourcesAndAddThemIfPossible,
   clickOnBuildingSlot,

@@ -1,23 +1,22 @@
 import puppeteer, { Page } from "puppeteer";
-import { bypassRecaptcha } from "./funcs/bypassRecaptcha";
-import { login } from "./funcs/login";
+import { bypassRecaptcha } from "./utils/bypassRecaptcha";
+import { login } from "./actions/login";
 import { delay, parseCSV } from "../utils";
 import path from "path";
 import { startBuildingByPlan } from "./funcs/tasks";
-import { goToClosestAdventureIfExsists, levelupHero } from "./funcs/hero";
+import { goToClosestAdventureIfExsists, levelupHero } from "./actions/hero";
 import {
   checkIfDailyQuestCompleted,
   checkIfQuestCompleted,
-} from "./funcs/quests";
-import { clickNavigationSlot } from "./funcs/clicker";
-import { extendGoldPlanAndResources } from "./funcs/gold";
+} from "./builder/quests";
+import { clickNavigationSlot } from "./actions/clicker";
+import { extendGoldPlanAndResources } from "./actions/gold";
 import { LoggerLevels, createLogger, serverLogger } from "../config/logger";
 import { TravianAccountInfo } from "../utils/CronManager";
 import { supabase } from "../config/supabase";
-import fs from "fs";
 import { cronManager } from "../controllers/cron.controller";
 import { sync } from "rimraf";
-import { extendProtection } from "./funcs/protection";
+import { extendProtection } from "./actions/protection";
 
 export const travianStart = async (
   botId: string,
@@ -33,6 +32,9 @@ export const travianStart = async (
   let browser;
   try {
     // Launch Browser
+    const serverArgs = process.env.DEV_MODE
+      ? []
+      : ["--no-zygote", "--single-process"];
     browser = await puppeteer.launch({
       ...(process.env.DEV_MODE && { headless: false }),
       userDataDir: `./user_data/${botId}`,
@@ -42,8 +44,7 @@ export const travianStart = async (
         "--no-sandbox",
         "--disabled-setupid-sandbox",
         // These flags are needed so there is launched only single process, otherwise application disconnects from chrome but keeps it running in the background
-        "--no-zygote",
-        "--single-process",
+        ...serverArgs,
       ],
       defaultViewport: {
         width: 1280,

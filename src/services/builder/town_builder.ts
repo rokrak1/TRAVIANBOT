@@ -1,7 +1,7 @@
 import { ElementHandle, Page } from "puppeteer";
 import { CSV_ROW, delay } from "../../utils";
-import { NavigationTypes } from "../slots/navigationSlots";
-import { clickNavigationSlot } from "./clicker";
+import { NavigationTypes } from "./navigationSlots";
+import { clickNavigationSlot } from "../actions/clicker";
 import {
   checkAllResourcesAndAddThemIfPossible,
   clickOnExchangeButton,
@@ -9,7 +9,7 @@ import {
   getAlreadyBuiltBuildings,
 } from "./builder";
 import { LoggerLevels } from "../../config/logger";
-import { Slots } from "../slots/csvSlots";
+import { Slots } from "./csvSlots";
 
 export const upgradeBuilding = async (page: Page, row: CSV_ROW) => {
   const pageUrl = page.url();
@@ -286,7 +286,7 @@ const openEmptySlotAndBuild = async (
       return;
     }
   }
-  await delay(200, 600);
+  await delay(300, 400);
 
   // Search for building in all tabs
   const building = await findBuilding(page, row);
@@ -302,32 +302,48 @@ const openEmptySlotAndBuild = async (
 };
 
 const findBuilding = async (page: Page, row: CSV_ROW) => {
+  await page.waitForSelector(".scrollingContainer");
   const tabs = await page.$$(".scrollingContainer a");
-  for (let tab of tabs) {
-    await tab.click();
-    try {
-      await page.waitForNetworkIdle({ timeout: 5000 });
-    } catch (e) {
-      await page.logger(LoggerLevels.ERROR, "waiting for navigation failed..");
-      return;
+  for (let i = 0; i < tabs.length; i++) {
+    if (i > 0) {
+      try {
+        // Puppeteer has problem with clicking on elements when context changes so we need to reselect them
+        const newTabs = await page.$$(".scrollingContainer a");
+        await newTabs[i].click();
+        await page.waitForNetworkIdle({ timeout: 5000 });
+      } catch (e) {
+        console.log("waiting for navigation failed..", e);
+        await page.logger(
+          LoggerLevels.ERROR,
+          "waiting for navigation failed.."
+        );
+        return;
+      }
     }
-    await delay(200, 600);
+    await delay(800, 1200);
+
+    // Get all names of buildings
     const buildingList = await page.$$(".buildingWrapper");
-    const building = buildingList.find(async (building) => {
-      const buildingName = await building.evaluate(
-        (el) => el.querySelector("h2")?.textContent
-      );
-      const buildingNameKey = buildingName
-        ?.toUpperCase()
-        .trim()
-        .replace(" ", "_") as keyof typeof Slots;
-      return buildingNameKey === row.slot;
-    });
-    if (building) return building;
+    const buildingNames = await Promise.all(
+      buildingList.map(async (building) => {
+        const buildingName = await building.evaluate(
+          (el) => el.querySelector("h2")?.textContent
+        );
+        const buildingNameKey = buildingName
+          ?.toUpperCase()
+          .trim()
+          .replace(" ", "_") as keyof typeof Slots;
+        return buildingNameKey;
+      })
+    );
+
+    // Check if building is in the list
+    if (buildingNames.includes(row.slot as any)) {
+      return buildingList[buildingNames.indexOf(row.slot as any)];
+    }
   }
   return null;
 };
-
 const getFirstEmptySlot = async (page: Page) => {
   const buildingSlots = await page.$$("#villageContent .buildingSlot");
 
@@ -339,10 +355,7 @@ const getFirstEmptySlot = async (page: Page) => {
       (el) => el.classList.contains("a40") || el.classList.contains("a39")
     );
 
-    console.log(attrName, "attrName", classNameWallOrRallyPoint);
-
     if (attrName === "" && !classNameWallOrRallyPoint) {
-      console.log("Building slot found..", attrName, classNameWallOrRallyPoint);
       return buildingSlot;
     }
   }

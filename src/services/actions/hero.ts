@@ -1,8 +1,8 @@
 import { ElementHandle, Page } from "puppeteer";
 import { clickNavigationSlot } from "./clicker";
-import { NavigationTypes } from "../slots/navigationSlots";
+import { NavigationTypes } from "../builder/navigationSlots";
 import { delay, timeToSeconds } from "../../utils";
-import { EResources, Resources } from "./resources";
+import { EResources, Resources } from "../builder/resources";
 import { LoggerLevels } from "../../config/logger";
 
 enum EResourcesElements {

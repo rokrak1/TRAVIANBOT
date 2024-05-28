@@ -1,7 +1,7 @@
 import { Page } from "puppeteer";
 import { delay } from "../../utils";
-import { NavigationTypes } from "../slots/navigationSlots";
-import { clickNavigationSlot } from "./clicker";
+import { NavigationTypes } from "./navigationSlots";
+import { clickNavigationSlot } from "../actions/clicker";
 import { LoggerLevels } from "../../config/logger";
 
 export const checkIfDailyQuestCompleted = async (page: Page) => {
