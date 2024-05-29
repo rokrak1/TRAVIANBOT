@@ -14,7 +14,6 @@ import { extendGoldPlanAndResources } from "./actions/gold";
 import { LoggerLevels, createLogger, serverLogger } from "../config/logger";
 import { TravianAccountInfo } from "../utils/CronManager";
 import { supabase } from "../config/supabase";
-import { cronManager } from "../controllers/cron.controller";
 import { sync } from "rimraf";
 import { extendProtection } from "./actions/protection";
 
@@ -117,7 +116,11 @@ export const travianStart = async (
 
     // If there are no constructions, stop the bot
     if (hasFinished) {
-      await finishTravianBot(page, botId);
+      await page.logger(
+        LoggerLevels.INFO,
+        "There are no constructions left..."
+      );
+      return "TERMINATE";
     }
 
     // Do some random clicks to make it look more human (2 to 5 clicks)
@@ -139,30 +142,6 @@ export const travianStart = async (
       await browser.close();
     }
   }
-};
-
-const finishTravianBot = async (page: Page, botId: string) => {
-  const currentJob = cronManager.list()[botId];
-  await page.logger(LoggerLevels.INFO, "There are no constructions left...");
-  const { data, error } = await supabase
-    .from("bot")
-    .update({ force_stop_reason: "Plan finished" })
-    .eq("id", currentJob.botId);
-  if (error) {
-    await page.logger(
-      LoggerLevels.ERROR,
-      "Error updating bot force_stop_reason"
-    );
-  }
-
-  try {
-    await currentJob.cron.stop();
-  } catch (e) {
-    await serverLogger(LoggerLevels.ERROR, `Error stopping cron job: ${e}`);
-    return;
-  }
-
-  await page.logger(LoggerLevels.SUCCESS, "Bot stopped. Reason: Plan finished");
 };
 
 export const travianStop = async (botId: string) => {

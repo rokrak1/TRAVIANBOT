@@ -7,12 +7,10 @@ import {
 } from "../utils/CronManager";
 import { Worker } from "worker_threads";
 import { LoggerLevels, serverLogger } from "../config/logger";
+import { supabase } from "../config/supabase";
 
-export const addCronJob = async (
-  cronManager: CronManager,
-  bot: Bot,
-  options: TravianAccountInfo
-) => {
+export const addCronJob = async (bot: Bot, options: TravianAccountInfo) => {
+  const cronManager = CronManager.getInstance();
   cronManager.add(
     bot.name,
     bot.id,
@@ -35,6 +33,10 @@ export const addCronJob = async (
             );
             console.log(`Worker for botId ${bot.id} terminated successfully.`);
           });
+
+          if (result.result === "TERMINATE") {
+            finishTravianBot(bot.id);
+          }
         } else {
           console.error(
             `Error in Puppeteer task for botId ${bot.id}:`,
@@ -86,4 +88,29 @@ export const addCronJob = async (
     },
     options
   );
+};
+
+const finishTravianBot = async (botId: string) => {
+  const cronManager = CronManager.getInstance();
+  const currentJob = cronManager.list()[botId];
+  const { data, error } = await supabase
+    .from("bots")
+    .update({ force_stop_reason: "Plan finished" })
+    .eq("id", currentJob.botId);
+
+  if (error) {
+    await serverLogger(
+      LoggerLevels.ERROR,
+      `Error updating bot in supabase: ${error}`
+    );
+    return;
+  }
+  try {
+    await currentJob.cron.stop();
+  } catch (e) {
+    await serverLogger(LoggerLevels.ERROR, `Error stopping cron job: ${e}`);
+    return;
+  }
+
+  await serverLogger(LoggerLevels.INFO, `Cron job ${botId} stopped`);
 };

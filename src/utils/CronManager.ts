@@ -29,9 +29,18 @@ export interface CronJobDetails {
   options: TravianAccountInfo;
   interval: keyof typeof CronIntervals;
 }
-
 export class CronManager {
+  private static _instance: CronManager;
   private _jobs: { [key: string]: CronJobDetails } = {};
+
+  private constructor() {}
+
+  public static getInstance(): CronManager {
+    if (!this._instance) {
+      this._instance = new CronManager();
+    }
+    return this._instance;
+  }
 
   add(
     name: string,

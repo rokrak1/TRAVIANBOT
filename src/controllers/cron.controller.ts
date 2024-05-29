@@ -14,7 +14,7 @@ import { supabase } from "../config/supabase";
 import { addCronJob } from "../services/cron.service";
 import { LoggerLevels, serverLogger } from "../config/logger";
 
-export const cronManager = new CronManager();
+const cronManager = CronManager.getInstance();
 
 interface StartRequestBody {
   options: TravianAccountInfo;
@@ -72,7 +72,7 @@ export const getSupabaseActiveJobAndStartWorkersWithCron = async () => {
       proxyPassword: bot.bot_configuration.proxies.proxy_password,
       proxyUsername: bot.bot_configuration.proxies.proxy_username,
     };
-    await addCronJob(cronManager, bot, options);
+    await addCronJob(bot, options);
   }
 };
 
@@ -89,13 +89,8 @@ class CronController {
         `Cron job started for botId ${botId}`
       );
     } else {
-      await addCronJob(
-        cronManager,
-        { id: botId, name, interval } as Bot,
-        options
-      );
+      await addCronJob({ id: botId, name, interval } as Bot, options);
     }
-
     reply.send({
       status: `Cron job id ${botId} started with schedule ${CronIntervals[interval]}`,
     });
