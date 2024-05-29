@@ -1,4 +1,5 @@
 import fs from "fs";
+import { Slots } from "../services/builder/csvSlots";
 
 export const delay = async (min: number, max: number) => {
   const time = Math.floor(Math.random() * (max - min + 1) + min);
@@ -13,7 +14,8 @@ export const parseValue = (resource: string): number => {
 };
 
 export interface CSV_ROW {
-  slot: string;
+  id: number;
+  slot: Slots;
   level: string;
 }
 

@@ -1,11 +1,12 @@
 import { Page } from "puppeteer";
-import { CSV_ROW, delay, timeToSeconds } from "../../utils";
+import { delay, timeToSeconds } from "../../utils";
 import { clickNavigationSlot } from "../actions/clicker";
 import { NavigationTypes } from "../builder/navigationSlots";
 import { LoggerLevels } from "../../config/logger";
 import { Slots } from "../builder/csvSlots";
 import { upgradeFields } from "../builder/fields_builder";
 import { upgradeBuilding } from "../builder/town_builder";
+import { PlanItem, PlanStatus } from "../utils/db";
 
 const getArrayOfConstructions = async (page: Page): Promise<number[]> => {
   const url = page.url();
@@ -35,15 +36,25 @@ const getArrayOfConstructions = async (page: Page): Promise<number[]> => {
   }
 };
 
-export const startBuildingByPlan = async (page: Page, plan: CSV_ROW[]) => {
+export const startBuildingByPlan = async (page: Page, plan: PlanItem[]) => {
   let planIndex = 0;
   let earlyBreak = false;
+  if (!plan.length) {
+    await page.logger(LoggerLevels.INFO, "No plan found");
+    return;
+  }
   while (planIndex < plan.length) {
+    const row = plan[planIndex];
+
+    if (row.status === PlanStatus.DONE) {
+      planIndex++;
+      continue;
+    }
+
     await page.logger(
       LoggerLevels.INFO,
       `Starting plan: ${plan[planIndex].slot}, to level: ${plan[planIndex].level}`
     );
-    const row = plan[planIndex];
 
     // Check if there are already 2 constructions
     const [time1, time2] = await getArrayOfConstructions(page);
@@ -90,7 +101,7 @@ export const startBuildingByPlan = async (page: Page, plan: CSV_ROW[]) => {
 
 const proceedWithUpgrades = async (
   page: Page,
-  row: CSV_ROW,
+  row: PlanItem,
   underConstructionNumber: number
 ): Promise<any[]> => {
   // RESOURCES

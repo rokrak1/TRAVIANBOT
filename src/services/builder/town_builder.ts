@@ -10,8 +10,9 @@ import {
 } from "./builder";
 import { LoggerLevels } from "../../config/logger";
 import { Slots } from "./csvSlots";
+import { PlanItem, PlanSingelton, PlanStatus } from "../utils/db";
 
-export const upgradeBuilding = async (page: Page, row: CSV_ROW) => {
+export const upgradeBuilding = async (page: Page, row: PlanItem) => {
   const pageUrl = page.url();
 
   // Only go to town if not already in town
@@ -69,7 +70,7 @@ export const upgradeBuilding = async (page: Page, row: CSV_ROW) => {
       // Set level number and check if building is upgrading
       let levelNumber = parseInt(level, 10);
       levelNumber += isFieldUnderConstruction ? 1 : 0;
-      if (parseInt(row.level, 10) > levelNumber) {
+      if (row.level > levelNumber) {
         console.log(
           "Level is not enough.. Current:",
           levelNumber,
@@ -78,7 +79,7 @@ export const upgradeBuilding = async (page: Page, row: CSV_ROW) => {
         );
 
         // FreezeIndex of rows if building should be upgraded more than 1 level
-        const freezeIndex = parseInt(row.level, 10) - levelNumber > 1;
+        const freezeIndex = row.level - levelNumber > 1;
         await page.logger(
           LoggerLevels.INFO,
           `Freezing index, level is too low.. Current lvl: ${levelNumber}, Should be: ${row.level}`
@@ -98,6 +99,10 @@ export const upgradeBuilding = async (page: Page, row: CSV_ROW) => {
           }
           await clickOnUpgradeButton(page);
           await page.logger(LoggerLevels.SUCCESS, `Building upgraded.`);
+          PlanSingelton.getInstance().updateStatus(
+            row.id,
+            PlanStatus.UPGRADING
+          );
           try {
             await page.waitForNavigation({ timeout: 5000 });
           } catch (e) {
@@ -156,6 +161,10 @@ export const upgradeBuilding = async (page: Page, row: CSV_ROW) => {
           await upgradeFunc(page);
 
           await page.logger(LoggerLevels.SUCCESS, `Building upgraded.`);
+          PlanSingelton.getInstance().updateStatus(
+            row.id,
+            PlanStatus.UPGRADING
+          );
           await page.waitForNavigation({
             waitUntil: "networkidle0",
             timeout: 5000,
@@ -164,6 +173,7 @@ export const upgradeBuilding = async (page: Page, row: CSV_ROW) => {
         }
       } else {
         await page.logger(LoggerLevels.INFO, "Done.. Skipping..");
+        PlanSingelton.getInstance().updateStatus(row.id, PlanStatus.DONE);
         console.log("Done, Skipping..");
         return [false, false];
       }
@@ -257,7 +267,8 @@ export const upgradeBuilding = async (page: Page, row: CSV_ROW) => {
       return [true, false];
     }
     await page.logger(LoggerLevels.SUCCESS, `Building construction started.`);
-    const freezeIndex = parseInt(row.level, 10) > 1;
+    PlanSingelton.getInstance().updateStatus(row.id, PlanStatus.UPGRADING);
+    const freezeIndex = row.level > 1;
     freezeIndex &&
       (await page.logger(
         LoggerLevels.INFO,
@@ -274,7 +285,7 @@ export const upgradeBuilding = async (page: Page, row: CSV_ROW) => {
 const openEmptySlotAndBuild = async (
   page: Page,
   firstEmptySlot: ElementHandle<Element>,
-  row: CSV_ROW
+  row: PlanItem
 ) => {
   const path = await firstEmptySlot.$("path");
   if (path) {
@@ -301,7 +312,7 @@ const openEmptySlotAndBuild = async (
   return building;
 };
 
-const findBuilding = async (page: Page, row: CSV_ROW) => {
+const findBuilding = async (page: Page, row: PlanItem) => {
   await page.waitForSelector(".scrollingContainer");
   const tabs = await page.$$(".scrollingContainer a");
   for (let i = 0; i < tabs.length; i++) {

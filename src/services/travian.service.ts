@@ -16,6 +16,7 @@ import { TravianAccountInfo } from "../utils/CronManager";
 import { supabase } from "../config/supabase";
 import { sync } from "rimraf";
 import { extendProtection } from "./actions/protection";
+import { PlanSingelton } from "./utils/db";
 
 export const travianStart = async (
   botId: string,
@@ -30,6 +31,22 @@ export const travianStart = async (
 ) => {
   let browser;
   try {
+    const bot = await fetchBotTypeAndPlan(botId);
+    if (!bot) {
+      await serverLogger(LoggerLevels.ERROR, "Bot configuration not found");
+      throw new Error("Bot configuration not found");
+    }
+    const { plan, type } = bot;
+
+    if (type === "VILLAGE_BUILDER" && !plan) {
+      await serverLogger(LoggerLevels.ERROR, "Bot plan not found");
+      throw new Error("Bot plan not found");
+    }
+
+    if (plan && plan?.length && type === "VILLAGE_BUILDER") {
+      PlanSingelton.createInstance(botId, plan);
+    }
+    console.log("bot:", bot);
     // Launch Browser
     const serverArgs = process.env.DEV_MODE
       ? []
@@ -111,7 +128,6 @@ export const travianStart = async (
     await extendProtection(page);
 
     // Start building by plan
-    const plan = await parseCSV(path.join(process.cwd(), "src", "plan.csv"));
     const hasFinished = await startBuildingByPlan(page, plan);
 
     // If there are no constructions, stop the bot
@@ -142,6 +158,19 @@ export const travianStart = async (
       await browser.close();
     }
   }
+};
+
+const fetchBotTypeAndPlan = async (botId: string) => {
+  console.log("botId:", botId);
+  const { data: bot, error: bError } = await supabase
+    .from("bots")
+    .select("plan, type")
+    .eq("id", botId)
+    .single();
+  if (bError) {
+    throw bError;
+  }
+  return bot;
 };
 
 export const travianStop = async (botId: string) => {

@@ -9,10 +9,11 @@ import {
   clickOnUpgradeButton,
 } from "./builder";
 import { LoggerLevels } from "../../config/logger";
+import { PlanItem, PlanSingelton, PlanStatus } from "../utils/db";
 
 export const upgradeFields = async (
   page: Page,
-  row: CSV_ROW,
+  row: PlanItem,
   underConstructionNumber: number
 ) => {
   const pageUrl = page.url();
@@ -55,7 +56,7 @@ export const upgradeFields = async (
     );
     fieldLevelNumber += isUpgrading ? 1 : 0;
     if (
-      parseInt(row.level, 10) > fieldLevelNumber &&
+      row.level > fieldLevelNumber &&
       !isFieldUnderConstruction &&
       !isFieldMaxLevel
     ) {
@@ -125,4 +126,5 @@ export const upgradeFields = async (
   }
   if (underConstructionNumber > 1) return true;
   await page.logger(LoggerLevels.INFO, "All fields upgraded. Skipping..");
+  PlanSingelton.getInstance().updateStatus(row.id, PlanStatus.DONE);
 };
