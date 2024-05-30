@@ -1,5 +1,5 @@
 import { supabase } from "../../config/supabase";
-import { Slots } from "../builder/csvSlots";
+import { Slots } from "../villageBuilder/csvSlots";
 
 export enum PlanStatus {
   UPGRADING = "UPGRADING",

@@ -1,7 +1,10 @@
 import { Page } from "puppeteer";
 import { delay } from "../../utils";
-import { NavigationTypes, navigationSlots } from "../builder/navigationSlots";
-import { RSlots, rSlots } from "../builder/resourcesSlots";
+import {
+  NavigationTypes,
+  navigationSlots,
+} from "../villageBuilder/navigationSlots";
+import { RSlots, rSlots } from "../villageBuilder/resourcesSlots";
 
 export const clickNavigationSlot = async (
   page: Page,

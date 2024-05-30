@@ -1,5 +1,5 @@
 import { delay } from "../utils";
-import { clickNavigationSlot } from "./actions/clicker";
+import { clickNavigationSlot } from "./travianActions/clicker";
 import { LoggerLevels, serverLogger } from "../config/logger";
 import { TravianAccountInfo } from "../utils/CronManager";
 import { firstSteps } from "./funcs/firstSteps";

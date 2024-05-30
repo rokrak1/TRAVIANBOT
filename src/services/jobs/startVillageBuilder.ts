@@ -1,9 +1,9 @@
 import { Page } from "puppeteer";
 import { LoggerLevels, serverLogger } from "../../config/logger";
-import { basicGameRoutines } from "../actions/checkers";
+import { basicGameRoutines } from "../travianActions/checkers";
 import { JobResults } from "../cron.service";
 import { PlanSingelton } from "../funcs/plan";
-import { startBuildingByPlan } from "../funcs/tasks";
+import { startBuildingByPlan } from "../villageBuilder/tasks";
 import { fetchBotPlan } from "../utils/database";
 
 export const startVillageBuilder = async (botId: string, page: Page) => {

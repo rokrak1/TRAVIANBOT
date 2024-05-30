@@ -1,12 +1,12 @@
 import { Page } from "puppeteer";
 import { delay, timeToSeconds } from "../../utils";
-import { clickNavigationSlot } from "../actions/clicker";
-import { NavigationTypes } from "../builder/navigationSlots";
+import { clickNavigationSlot } from "../travianActions/clicker";
+import { NavigationTypes } from "./navigationSlots";
 import { LoggerLevels } from "../../config/logger";
-import { Slots } from "../builder/csvSlots";
-import { upgradeFields } from "../builder/fields_builder";
-import { upgradeBuilding } from "../builder/town_builder";
-import { PlanItem, PlanStatus } from "./plan";
+import { Slots } from "./csvSlots";
+import { upgradeFields } from "./fields_builder";
+import { upgradeBuilding } from "./town_builder";
+import { PlanItem, PlanStatus } from "../funcs/plan";
 
 const getArrayOfConstructions = async (page: Page): Promise<number[]> => {
   const url = page.url();
