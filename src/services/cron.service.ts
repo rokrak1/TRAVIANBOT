@@ -9,7 +9,15 @@ import { Worker } from "worker_threads";
 import { LoggerLevels, serverLogger } from "../config/logger";
 import { supabase } from "../config/supabase";
 
-export const addCronJob = async (bot: Bot, options: TravianAccountInfo) => {
+export enum JobResults {
+  TERMINATE = "TERMINATE",
+}
+
+export const addCronJob = async (
+  bot: Bot,
+  options: TravianAccountInfo,
+  additionalConfiguration: object
+) => {
   const cronManager = CronManager.getInstance();
   cronManager.add(
     bot.name,
@@ -34,7 +42,7 @@ export const addCronJob = async (bot: Bot, options: TravianAccountInfo) => {
             console.log(`Worker for botId ${bot.id} terminated successfully.`);
           });
 
-          if (result.result === "TERMINATE") {
+          if (result.result === JobResults.TERMINATE) {
             finishTravianBot(bot.id);
           }
         } else {
@@ -80,7 +88,7 @@ export const addCronJob = async (bot: Bot, options: TravianAccountInfo) => {
       });
 
       // Send data to the worker to start the Puppeteer job
-      worker.postMessage({ botId: bot.id, options });
+      worker.postMessage({ botId: bot.id, options, additionalConfiguration });
       await serverLogger(
         LoggerLevels.INFO,
         `Cron job started for botId ${bot.id}`

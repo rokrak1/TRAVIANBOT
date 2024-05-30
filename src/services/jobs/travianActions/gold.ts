@@ -1,8 +1,8 @@
 import { Page } from "puppeteer";
-import { delay, parseValue } from "../../utils";
-import { LoggerLevels } from "../../config/logger";
+import { delay, parseValue } from "../../../utils";
+import { LoggerLevels } from "../../../config/logger";
 import { clickNavigationSlot } from "./clicker";
-import { NavigationTypes } from "../builder/navigationSlots";
+import { NavigationTypes } from "../villageBuilder/navigationSlots";
 
 export const extendGoldPlanAndResources = async (page: Page) => {
   const url = page.url();

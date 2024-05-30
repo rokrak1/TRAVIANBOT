@@ -1,8 +1,9 @@
 import fs from "fs";
-import { Slots } from "../services/builder/csvSlots";
+import { Slots } from "../services/jobs/villageBuilder/csvSlots";
 
 export const delay = async (min: number, max: number) => {
   const time = Math.floor(Math.random() * (max - min + 1) + min);
+  console.log(`Delaying for ${time}ms`);
   return new Promise((r) => setTimeout(r, time));
 };
 

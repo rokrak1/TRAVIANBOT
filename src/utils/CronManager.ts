@@ -20,6 +20,7 @@ interface TravianAccountInfo {
   proxyDomain: string;
   proxyUsername: string;
   proxyPassword: string;
+  type: string;
 }
 
 export interface CronJobDetails {

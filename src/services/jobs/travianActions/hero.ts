@@ -1,9 +1,9 @@
 import { ElementHandle, Page } from "puppeteer";
 import { clickNavigationSlot } from "./clicker";
-import { NavigationTypes } from "../builder/navigationSlots";
-import { delay, timeToSeconds } from "../../utils";
-import { EResources, Resources } from "../builder/resources";
-import { LoggerLevels } from "../../config/logger";
+import { NavigationTypes } from "../villageBuilder/navigationSlots";
+import { delay, timeToSeconds } from "../../../utils";
+import { EResources, Resources } from "../villageBuilder/resources";
+import { LoggerLevels } from "../../../config/logger";
 
 enum EResourcesElements {
   WOOD = "woodElement",

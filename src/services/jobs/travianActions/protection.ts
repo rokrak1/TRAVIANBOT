@@ -1,6 +1,6 @@
 import { Page } from "puppeteer";
-import { delay } from "../../utils";
-import { LoggerLevels } from "../../config/logger";
+import { delay } from "../../../utils";
+import { LoggerLevels } from "../../../config/logger";
 
 export const extendProtection = async (page: Page) => {
   const sidebarItems = await page.$$("#sidebarBoxInfobox li");

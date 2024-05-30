@@ -1,10 +1,6 @@
 import { FastifyReply, FastifyRequest } from "fastify";
 import { controller, get, post } from "../decorators";
-import {
-  removeUserData,
-  travianStart,
-  travianStop,
-} from "../services/travian.service";
+import { travianStart } from "../services/travian.service";
 import {
   CronManager,
   CronIntervals,
@@ -13,6 +9,8 @@ import {
 import { supabase } from "../config/supabase";
 import { addCronJob } from "../services/cron.service";
 import { LoggerLevels, serverLogger } from "../config/logger";
+import { travianStop } from "../services/utils/database";
+import { removeUserData } from "../services/utils";
 
 const cronManager = CronManager.getInstance();
 
@@ -21,6 +19,7 @@ interface StartRequestBody {
   interval: keyof typeof CronIntervals;
   botId: string;
   name: string;
+  additionalConfiguration?: object;
 }
 
 interface Proxy {
@@ -47,6 +46,7 @@ export interface Bot {
   created_at: string;
   isRunning?: boolean;
   interval: string;
+  type: string;
 }
 
 export const getSupabaseActiveJobAndStartWorkersWithCron = async () => {
@@ -71,8 +71,12 @@ export const getSupabaseActiveJobAndStartWorkersWithCron = async () => {
       proxyDomain: bot.bot_configuration.proxies.proxy_domain,
       proxyPassword: bot.bot_configuration.proxies.proxy_password,
       proxyUsername: bot.bot_configuration.proxies.proxy_username,
+      type: bot.type,
     };
-    await addCronJob(bot, options);
+
+    // TODO: Add additional configuration to database
+    const additionalConfiguration = {};
+    await addCronJob(bot, options, additionalConfiguration);
   }
 };
 
@@ -80,16 +84,21 @@ export const getSupabaseActiveJobAndStartWorkersWithCron = async () => {
 class CronController {
   @post("/start")
   async start(req: FastifyRequest, reply: FastifyReply) {
-    const { options, interval, botId, name } = req.body as StartRequestBody;
+    const { options, interval, botId, name, additionalConfiguration } =
+      req.body as StartRequestBody;
 
     if (process.env.DEV_MODE) {
-      await travianStart(botId, options);
+      await travianStart(botId, options, additionalConfiguration);
       await serverLogger(
         LoggerLevels.INFO,
         `Cron job started for botId ${botId}`
       );
     } else {
-      await addCronJob({ id: botId, name, interval } as Bot, options);
+      await addCronJob(
+        { id: botId, name, interval } as Bot,
+        options,
+        additionalConfiguration || {}
+      );
     }
     reply.send({
       status: `Cron job id ${botId} started with schedule ${CronIntervals[interval]}`,

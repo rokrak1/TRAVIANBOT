@@ -1,16 +1,16 @@
 import { ElementHandle, Page } from "puppeteer";
-import { CSV_ROW, delay } from "../../utils";
+import { CSV_ROW, delay } from "../../../utils";
 import { NavigationTypes } from "./navigationSlots";
-import { clickNavigationSlot } from "../actions/clicker";
+import { clickNavigationSlot } from "../travianActions/clicker";
 import {
   checkAllResourcesAndAddThemIfPossible,
   clickOnExchangeButton,
   clickOnUpgradeButton,
   getAlreadyBuiltBuildings,
 } from "./builder";
-import { LoggerLevels } from "../../config/logger";
+import { LoggerLevels } from "../../../config/logger";
 import { Slots } from "./csvSlots";
-import { PlanItem, PlanSingelton, PlanStatus } from "../utils/db";
+import { PlanItem, PlanSingelton, PlanStatus } from "../../funcs/plan";
 
 export const upgradeBuilding = async (page: Page, row: PlanItem) => {
   const pageUrl = page.url();

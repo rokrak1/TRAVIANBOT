@@ -1,13 +1,13 @@
 import { Page } from "puppeteer";
-import { delay } from "../../utils";
+import { delay } from "../../../utils";
 import { getResourceAmount } from "./resources";
-import { LoggerLevels } from "../../config/logger";
+import { LoggerLevels } from "../../../config/logger";
 import { NavigationTypes } from "./navigationSlots";
-import { clickNavigationSlot } from "../actions/clicker";
+import { clickNavigationSlot } from "../travianActions/clicker";
 import {
   collectSingleHeroResource,
   getAvailableHeroResources,
-} from "../actions/hero";
+} from "../travianActions/hero";
 import { rSlots } from "./resourcesSlots";
 
 export const clickOnUpgradeButton = async (page: Page) => {

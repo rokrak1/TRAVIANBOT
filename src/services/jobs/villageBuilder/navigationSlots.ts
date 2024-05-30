@@ -1,6 +1,5 @@
 import { Page } from "puppeteer";
-import { delay } from "../../utils";
-import { LoggerLevels } from "../../config/logger";
+import { LoggerLevels } from "../../../config/logger";
 
 export enum NavigationTypes {
   RESOURCES = "resources",

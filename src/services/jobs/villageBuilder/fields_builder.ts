@@ -1,6 +1,6 @@
 import { Page } from "puppeteer";
-import { CSV_ROW, delay } from "../../utils";
-import { clickNavigationSlot } from "../actions/clicker";
+import { delay } from "../../../utils";
+import { clickNavigationSlot } from "../travianActions/clicker";
 import { NavigationTypes } from "./navigationSlots";
 import {
   checkAllResourcesAndAddThemIfPossible,
@@ -8,8 +8,8 @@ import {
   clickOnExchangeButton,
   clickOnUpgradeButton,
 } from "./builder";
-import { LoggerLevels } from "../../config/logger";
-import { PlanItem, PlanSingelton, PlanStatus } from "../utils/db";
+import { LoggerLevels } from "../../../config/logger";
+import { PlanItem, PlanSingelton, PlanStatus } from "../../funcs/plan";
 
 export const upgradeFields = async (
   page: Page,
