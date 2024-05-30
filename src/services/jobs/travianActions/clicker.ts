@@ -1,5 +1,5 @@
 import { Page } from "puppeteer";
-import { delay } from "../../utils";
+import { delay } from "../../../utils";
 import {
   NavigationTypes,
   navigationSlots,

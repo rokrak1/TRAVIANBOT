@@ -1,7 +1,7 @@
 import { Page } from "puppeteer";
-import { delay } from "../../utils";
+import { delay } from "../../../utils";
 import { getResourceAmount } from "./resources";
-import { LoggerLevels } from "../../config/logger";
+import { LoggerLevels } from "../../../config/logger";
 import { NavigationTypes } from "./navigationSlots";
 import { clickNavigationSlot } from "../travianActions/clicker";
 import {

@@ -1,5 +1,5 @@
 import { Page } from "puppeteer";
-import { parseValue } from "../../utils";
+import { parseValue } from "../../../utils";
 
 export enum EResources {
   WOOD = "wood",

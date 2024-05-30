@@ -1,6 +1,6 @@
 import { Page } from "puppeteer";
-import { delay, parseValue } from "../../utils";
-import { LoggerLevels } from "../../config/logger";
+import { delay, parseValue } from "../../../utils";
+import { LoggerLevels } from "../../../config/logger";
 import { clickNavigationSlot } from "./clicker";
 import { NavigationTypes } from "../villageBuilder/navigationSlots";
 

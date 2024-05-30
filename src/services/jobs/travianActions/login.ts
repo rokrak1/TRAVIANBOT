@@ -1,5 +1,5 @@
 import { Page } from "puppeteer";
-import { LoggerLevels } from "../../config/logger";
+import { LoggerLevels } from "../../../config/logger";
 
 export const login = async (page: Page, username: string, password: string) => {
   try {

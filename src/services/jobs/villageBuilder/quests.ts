@@ -1,8 +1,8 @@
 import { Page } from "puppeteer";
-import { delay } from "../../utils";
+import { delay } from "../../../utils";
 import { NavigationTypes } from "./navigationSlots";
 import { clickNavigationSlot } from "../travianActions/clicker";
-import { LoggerLevels } from "../../config/logger";
+import { LoggerLevels } from "../../../config/logger";
 
 export const checkIfDailyQuestCompleted = async (page: Page) => {
   const quest = await page.$(".dailyQuests .indicator");

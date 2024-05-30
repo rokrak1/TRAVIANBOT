@@ -1,7 +1,7 @@
 import puppeteer from "puppeteer";
 import { TravianAccountInfo } from "../../utils/CronManager";
 import { createLogger } from "../../config/logger";
-import { bypassRecaptcha } from "../utils/bypassRecaptcha";
+import { bypassRecaptcha } from "./bypassRecaptcha";
 
 export const configureBrowser = async (
   botId: string,

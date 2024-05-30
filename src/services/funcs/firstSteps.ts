@@ -1,6 +1,6 @@
 import { Page } from "puppeteer";
 import { TravianAccountInfo } from "../../utils/CronManager";
-import { loginIfNeccessary } from "../travianActions/login";
+import { loginIfNeccessary } from "../jobs/travianActions/login";
 
 export const firstSteps = async (
   page: Page,

@@ -1,10 +1,6 @@
 import { FastifyReply, FastifyRequest } from "fastify";
 import { controller, get, post } from "../decorators";
-import {
-  removeUserData,
-  travianStart,
-  travianStop,
-} from "../services/travian.service";
+import { travianStart } from "../services/travian.service";
 import {
   CronManager,
   CronIntervals,
@@ -13,6 +9,8 @@ import {
 import { supabase } from "../config/supabase";
 import { addCronJob } from "../services/cron.service";
 import { LoggerLevels, serverLogger } from "../config/logger";
+import { travianStop } from "../services/utils/database";
+import { removeUserData } from "../services/utils";
 
 const cronManager = CronManager.getInstance();
 
@@ -47,6 +45,7 @@ export interface Bot {
   created_at: string;
   isRunning?: boolean;
   interval: string;
+  type: string;
 }
 
 export const getSupabaseActiveJobAndStartWorkersWithCron = async () => {
@@ -71,6 +70,7 @@ export const getSupabaseActiveJobAndStartWorkersWithCron = async () => {
       proxyDomain: bot.bot_configuration.proxies.proxy_domain,
       proxyPassword: bot.bot_configuration.proxies.proxy_password,
       proxyUsername: bot.bot_configuration.proxies.proxy_username,
+      type: bot.type,
     };
     await addCronJob(bot, options);
   }
