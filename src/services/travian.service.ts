@@ -1,20 +1,12 @@
 import { delay } from "../utils";
-import { startBuildingByPlan } from "./funcs/tasks";
 import { clickNavigationSlot } from "./actions/clicker";
 import { LoggerLevels, serverLogger } from "../config/logger";
 import { TravianAccountInfo } from "../utils/CronManager";
-import { PlanSingelton } from "./funcs/plan";
 import { firstSteps } from "./funcs/firstSteps";
 import { configureBrowser } from "./funcs/browserConfiguration";
-import { JobResults } from "./cron.service";
-import { fetchBotTypeAndPlan } from "./utils/database";
+import { BotType } from "./utils/database";
 import { removeUserData } from "./utils";
-
-enum BotType {
-  VILLAGE_BUILDER = "VILLAGE_BUILDER",
-  FARMER = "FARMER",
-  OASIS_FARMER = "OASIS_FARMER",
-}
+import { startVillageBuilder, startFarmer, startOasisFarmer } from "./jobs";
 
 export const travianStart = async (
   botId: string,
@@ -22,16 +14,13 @@ export const travianStart = async (
 ) => {
   let browser;
   try {
-    // Fetch bot type and plan if it's village builder
-    let type: BotType;
-    try {
-      type = await fetchBotTypeAndPlan(botId);
-    } catch (e) {
+    const { type } = configurations;
+
+    if (!type) {
       await serverLogger(
         LoggerLevels.ERROR,
-        `Error fetching bot type and plan: ${e}`
+        `Bot type is not defined for botId: ${botId}`
       );
-      console.error(e);
       return;
     }
 
@@ -42,24 +31,16 @@ export const travianStart = async (
     );
     browser = currBrowser;
 
-    // First steps that should be done on Village builder
+    // First steps that should be done on every bot
+    await firstSteps(page, configurations);
+
+    // Proceed with bot type
     if (type === BotType.VILLAGE_BUILDER) {
-      await firstSteps(page, configurations);
-
-      // Start building by plan
-      const hasFinished = await startBuildingByPlan(
-        page,
-        PlanSingelton.getInstance().getPlan()
-      );
-
-      // If there are no constructions, stop the bot
-      if (hasFinished) {
-        await page.logger(
-          LoggerLevels.INFO,
-          "There are no constructions left..."
-        );
-        return JobResults.TERMINATE;
-      }
+      await startVillageBuilder(botId, page);
+    } else if (type === BotType.FARMER) {
+      await startFarmer(page);
+    } else if (type === BotType.OASIS_FARMER) {
+      await startOasisFarmer(page);
     }
 
     // Do some random clicks to make it look more human (2 to 5 clicks)

@@ -2,7 +2,13 @@ import { LoggerLevels, serverLogger } from "../../config/logger";
 import { supabase } from "../../config/supabase";
 import { PlanSingelton } from "../funcs/plan";
 
-export const fetchBotTypeAndPlan = async (botId: string) => {
+export enum BotType {
+  VILLAGE_BUILDER = "VILLAGE_BUILDER",
+  FARMER = "FARMER",
+  OASIS_FARMER = "OASIS_FARMER",
+}
+
+export const fetchBotPlan = async (botId: string) => {
   const { data: bot, error: bError } = await supabase
     .from("bots")
     .select("plan, type")
@@ -18,12 +24,12 @@ export const fetchBotTypeAndPlan = async (botId: string) => {
   }
   const { plan, type } = bot;
 
-  if (type === "VILLAGE_BUILDER" && !plan) {
+  if (type === BotType.VILLAGE_BUILDER && !plan) {
     await serverLogger(LoggerLevels.ERROR, "Bot plan not found");
     throw new Error("Bot plan not found");
   }
 
-  if (plan && plan?.length && type === "VILLAGE_BUILDER") {
+  if (plan && plan?.length && type === BotType.VILLAGE_BUILDER) {
     PlanSingelton.createInstance(botId, plan);
   }
 
