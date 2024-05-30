@@ -10,7 +10,7 @@ import {
 } from "./builder";
 import { LoggerLevels } from "../../config/logger";
 import { Slots } from "./csvSlots";
-import { PlanItem, PlanSingelton, PlanStatus } from "../utils/db";
+import { PlanItem, PlanSingelton, PlanStatus } from "../funcs/plan";
 
 export const upgradeBuilding = async (page: Page, row: PlanItem) => {
   const pageUrl = page.url();

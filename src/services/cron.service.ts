@@ -9,6 +9,10 @@ import { Worker } from "worker_threads";
 import { LoggerLevels, serverLogger } from "../config/logger";
 import { supabase } from "../config/supabase";
 
+export enum JobResults {
+  TERMINATE = "TERMINATE",
+}
+
 export const addCronJob = async (bot: Bot, options: TravianAccountInfo) => {
   const cronManager = CronManager.getInstance();
   cronManager.add(
@@ -34,7 +38,7 @@ export const addCronJob = async (bot: Bot, options: TravianAccountInfo) => {
             console.log(`Worker for botId ${bot.id} terminated successfully.`);
           });
 
-          if (result.result === "TERMINATE") {
+          if (result.result === JobResults.TERMINATE) {
             finishTravianBot(bot.id);
           }
         } else {

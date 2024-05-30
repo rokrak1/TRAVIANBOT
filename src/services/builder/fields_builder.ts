@@ -9,7 +9,7 @@ import {
   clickOnUpgradeButton,
 } from "./builder";
 import { LoggerLevels } from "../../config/logger";
-import { PlanItem, PlanSingelton, PlanStatus } from "../utils/db";
+import { PlanItem, PlanSingelton, PlanStatus } from "../funcs/plan";
 
 export const upgradeFields = async (
   page: Page,

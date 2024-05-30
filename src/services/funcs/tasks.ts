@@ -6,7 +6,7 @@ import { LoggerLevels } from "../../config/logger";
 import { Slots } from "../builder/csvSlots";
 import { upgradeFields } from "../builder/fields_builder";
 import { upgradeBuilding } from "../builder/town_builder";
-import { PlanItem, PlanStatus } from "../utils/db";
+import { PlanItem, PlanStatus } from "./plan";
 
 const getArrayOfConstructions = async (page: Page): Promise<number[]> => {
   const url = page.url();
