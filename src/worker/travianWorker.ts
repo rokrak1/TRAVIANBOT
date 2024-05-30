@@ -3,9 +3,13 @@ import { travianStart } from "../services/travian.service";
 
 if (parentPort) {
   parentPort.on("message", async (data: any) => {
-    const { botId, options } = data;
+    const { botId, options, additionalConfiguration } = data;
     try {
-      const result = await travianStart(botId, options);
+      const result = await travianStart(
+        botId,
+        options,
+        additionalConfiguration
+      );
       parentPort!.postMessage({ success: true, result });
     } catch (error) {
       parentPort!.postMessage({ success: false, error: error });

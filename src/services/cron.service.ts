@@ -13,7 +13,11 @@ export enum JobResults {
   TERMINATE = "TERMINATE",
 }
 
-export const addCronJob = async (bot: Bot, options: TravianAccountInfo) => {
+export const addCronJob = async (
+  bot: Bot,
+  options: TravianAccountInfo,
+  additionalConfiguration: object
+) => {
   const cronManager = CronManager.getInstance();
   cronManager.add(
     bot.name,
@@ -84,7 +88,7 @@ export const addCronJob = async (bot: Bot, options: TravianAccountInfo) => {
       });
 
       // Send data to the worker to start the Puppeteer job
-      worker.postMessage({ botId: bot.id, options });
+      worker.postMessage({ botId: bot.id, options, additionalConfiguration });
       await serverLogger(
         LoggerLevels.INFO,
         `Cron job started for botId ${bot.id}`

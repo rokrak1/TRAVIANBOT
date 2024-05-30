@@ -10,7 +10,8 @@ import { startVillageBuilder, startFarmer, startOasisFarmer } from "./jobs";
 
 export const travianStart = async (
   botId: string,
-  configurations: TravianAccountInfo
+  configurations: TravianAccountInfo,
+  additionalConfiguration?: object
 ) => {
   let browser;
   try {
@@ -40,7 +41,11 @@ export const travianStart = async (
     } else if (type === BotType.FARMER) {
       await startFarmer(page);
     } else if (type === BotType.OASIS_FARMER) {
-      await startOasisFarmer(page);
+      await startOasisFarmer(
+        page,
+        configurations.travianDomain,
+        additionalConfiguration || {}
+      );
     }
 
     // Do some random clicks to make it look more human (2 to 5 clicks)
@@ -62,7 +67,7 @@ export const travianStart = async (
   } finally {
     // Make sure to close the browser even if there is an error
     if (browser) {
-      await browser.close();
+      //  await browser.close();
     }
   }
 };

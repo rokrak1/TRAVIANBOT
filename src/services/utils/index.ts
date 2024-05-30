@@ -1,6 +1,11 @@
 import path from "path";
 import { sync } from "rimraf";
 import { LoggerLevels, serverLogger } from "../../config/logger";
+import axios from "axios";
+
+const oasisApi = axios.create();
+oasisApi.defaults.withCredentials = true;
+export { oasisApi };
 
 export const removeUserData = async (botId: string) => {
   const userDataPath = path.join(process.cwd(), "user_data", botId);

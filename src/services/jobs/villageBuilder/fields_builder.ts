@@ -1,5 +1,5 @@
 import { Page } from "puppeteer";
-import { CSV_ROW, delay } from "../../../utils";
+import { delay } from "../../../utils";
 import { clickNavigationSlot } from "../travianActions/clicker";
 import { NavigationTypes } from "./navigationSlots";
 import {

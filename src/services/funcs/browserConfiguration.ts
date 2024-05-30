@@ -3,6 +3,9 @@ import { TravianAccountInfo } from "../../utils/CronManager";
 import { createLogger } from "../../config/logger";
 import { bypassRecaptcha } from "./bypassRecaptcha";
 
+export const userAgent =
+  "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/111.0.0.0 Safari/537.36";
+
 export const configureBrowser = async (
   botId: string,
   configurations: TravianAccountInfo
@@ -32,6 +35,7 @@ export const configureBrowser = async (
 
   const page = await browser.newPage();
 
+  await page.setUserAgent(userAgent);
   // Create new logger based on botId
   page.logger = await createLogger(botId!);
 
