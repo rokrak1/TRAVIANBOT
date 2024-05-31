@@ -67,7 +67,7 @@ export const travianStart = async (
   } finally {
     // Make sure to close the browser even if there is an error
     if (browser) {
-      //  await browser.close();
+      !process.env.DEV_MODE && (await browser.close());
     }
   }
 };
