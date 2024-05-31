@@ -108,6 +108,7 @@ export const upgradeFields = async (
         await upgradeFunc(page);
         await page.logger(LoggerLevels.SUCCESS, `Field upgraded.`);
         console.log("Field upgraded..");
+        PlanSingelton.getInstance().updateStatus(row.id, PlanStatus.UPGRADING);
         try {
           await page.waitForNavigation({
             waitUntil: "networkidle0",
