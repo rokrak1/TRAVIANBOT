@@ -4,7 +4,7 @@
 2. Set .env DEV_MODE to "true" `DEV_MODE=TRUE`, to avoid running workers and cron job
 3. Run server `npm start`
 
-##If you want to run workers locall run it with:
+## If you want to run workers locall run it with:
 
 ### Docker
 1. Place yourself in root folder
