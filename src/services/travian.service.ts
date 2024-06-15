@@ -7,29 +7,25 @@ import { configureBrowser } from "./funcs/browserConfiguration";
 import { BotType } from "./utils/database";
 import { removeUserData } from "./utils";
 import { startVillageBuilder, startFarmer, startOasisFarmer } from "./jobs";
+import { OasisAdditionalConfiguration } from "./jobs/oasisFarmer/types";
 
 export const travianStart = async (
   botId: string,
   configurations: TravianAccountInfo,
-  additionalConfiguration?: object
+  additionalConfiguration?: OasisAdditionalConfiguration
 ) => {
   let browser;
+
   try {
     const { type } = configurations;
 
     if (!type) {
-      await serverLogger(
-        LoggerLevels.ERROR,
-        `Bot type is not defined for botId: ${botId}`
-      );
+      await serverLogger(LoggerLevels.ERROR, `Bot type is not defined for botId: ${botId}`);
       return;
     }
 
     // Launch Browser with configuration
-    const { page, browser: currBrowser } = await configureBrowser(
-      botId,
-      configurations
-    );
+    const { page, browser: currBrowser } = await configureBrowser(botId, configurations);
     browser = currBrowser;
 
     // First steps that should be done on every bot
@@ -44,20 +40,20 @@ export const travianStart = async (
       await startOasisFarmer(
         page,
         configurations.travianDomain,
-        additionalConfiguration || {}
+        additionalConfiguration || ({} as OasisAdditionalConfiguration)
       );
     }
 
     // Do some random clicks to make it look more human (2 to 5 clicks)
     // TODO: Maybe this could be expanded to opening reports, checking other villages, etc.
-    const randomClicks = Math.floor(Math.random() * 3) + 2;
+    /*   const randomClicks = Math.floor(Math.random() * 3) + 2;
     for (let i = 0; i < randomClicks; i++) {
       await clickNavigationSlot(page);
       await delay(1100, 1900);
     }
 
     // Close browser
-    await delay(3278, 5122);
+    await delay(3278, 5122); */
   } catch (e) {
     console.error(e);
 
@@ -66,8 +62,8 @@ export const travianStart = async (
     await serverLogger(LoggerLevels.ERROR, `Error starting bot: ${e}`);
   } finally {
     // Make sure to close the browser even if there is an error
-    if (browser) {
-      //  await browser.close();
+    if (browser && !process.env.DEV_MODE) {
+      await browser.close();
     }
   }
 };
