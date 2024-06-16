@@ -298,7 +298,7 @@ const findVisibleValues = async (page: Page, mapInfo: MapInfo): Promise<Clickabl
 const compareValuesAndClickOasis = async (page: Page, clickableSquares: ClickableSquares[]) => {
   for (const oasis of oases) {
     for (const clickableSquare of clickableSquares) {
-      if (oasis.position.x === clickableSquare.x && oasis.position.y === clickableSquare.y) {
+      if (oasis.position.x === clickableSquare.x && oasis.position.y === clickableSquare.y && !oasis.wasSend) {
         await page.mouse.click(clickableSquare.clickPosition.x, clickableSquare.clickPosition.y);
         await delay(1000, 1200);
 
@@ -335,8 +335,6 @@ export const startMovingMap = async (
     }
 
     for (let direction of directions) {
-      const isAlreadyExplored = grid[currentY][currentX] === "x";
-      await moveMap(page, direction, mapInfo, isAlreadyExplored);
       switch (direction) {
         case Moves.UP:
           currentY--;
@@ -351,6 +349,8 @@ export const startMovingMap = async (
           currentX++;
           break;
       }
+      const isAlreadyExplored = grid[currentY][currentX] === "x";
+      await moveMap(page, direction, mapInfo, isAlreadyExplored);
       grid[currentY][currentX] = "x";
     }
     const clickableSquares = await findVisibleValues(page, mapInfo);

@@ -18,6 +18,7 @@ export interface OasisPosition {
   };
   position: { x: number; y: number };
   distance?: number;
+  wasSend?: boolean;
 }
 
 export const fetchOasisFromPositionNew = (tiles: Tile[]) => {
@@ -38,9 +39,8 @@ export const fetchOasisFromPositionNew = (tiles: Tile[]) => {
         $(".inlineIcon.tooltipUnit").each((index, element) => {
           const unitClass = $(element)!.find("i")!.attr("class")!.split(" ")[1];
           const unitAnimal =
-            Object.keys(animals).find((animal) =>
-              unitClass.includes(animals[animal as keyof typeof animals])
-            ) || "Unknown";
+            Object.keys(animals).find((animal) => unitClass.includes(animals[animal as keyof typeof animals])) ||
+            "Unknown";
           const unitValue = $(element).find(".value").text().trim();
           units[unitAnimal] = unitValue;
         });
@@ -59,10 +59,7 @@ export const fetchOasisFromPositionNew = (tiles: Tile[]) => {
   }
 };
 
-export const fetchOasisFromPosition = async (
-  tileCatcher: any,
-  position: { x: number; y: number }
-) => {
+export const fetchOasisFromPosition = async (tileCatcher: any, position: { x: number; y: number }) => {
   try {
     const response = await tileCatcher(position.x, position.y);
     const responseData = response.data;
@@ -84,9 +81,8 @@ export const fetchOasisFromPosition = async (
         $(".inlineIcon.tooltipUnit").each((index, element) => {
           const unitClass = $(element)!.find("i")!.attr("class")!.split(" ")[1];
           const unitAnimal =
-            Object.keys(animals).find((animal) =>
-              unitClass.includes(animals[animal as keyof typeof animals])
-            ) || "Unknown";
+            Object.keys(animals).find((animal) => unitClass.includes(animals[animal as keyof typeof animals])) ||
+            "Unknown";
           const unitValue = $(element).find(".value").text().trim();
           units[unitAnimal] = unitValue;
         });
@@ -133,10 +129,7 @@ export const createTileCatcher = (domain: string, cookie: string) => {
       data,
     };
 
-    return oasisApi.post(
-      `${domainWithoutLastRoute}/api/v1/map/position`,
-      sendData
-    );
+    return oasisApi.post(`${domainWithoutLastRoute}/api/v1/map/position`, sendData);
   };
 };
 
@@ -192,16 +185,7 @@ export const getPositions = (configuration: OasisAdditionalConfiguration) => {
       x: configuration.startX,
       y: configuration.startY - offsetY,
     };
-  const positions = [
-    leftTop,
-    leftBottom,
-    rightTop,
-    rightBottom,
-    leftCenter,
-    rightCenter,
-    topCenter,
-    bottomCenter,
-  ];
+  const positions = [leftTop, leftBottom, rightTop, rightBottom, leftCenter, rightCenter, topCenter, bottomCenter];
   return positions;
 };
 
@@ -268,18 +252,12 @@ export const fetchXHRCookies = async (page: Page) => {
   }
 
   // Hover over map container
-  await page.mouse.move(
-    mapContainerBox.x + mapContainerBox.width / 2,
-    mapContainerBox.y + mapContainerBox.height / 2
-  );
+  await page.mouse.move(mapContainerBox.x + mapContainerBox.width / 2, mapContainerBox.y + mapContainerBox.height / 2);
 
   // Wait for XHR request or a maximum timeout (5s)
   const timeout = setTimeout(() => {
     if (!xhrCookie) {
-      serverLogger(
-        LoggerLevels.WARN,
-        "XHR request not detected or no cookie found within 5 seconds"
-      );
+      serverLogger(LoggerLevels.WARN, "XHR request not detected or no cookie found within 5 seconds");
     }
     resolveFunction(true);
   }, 5000);

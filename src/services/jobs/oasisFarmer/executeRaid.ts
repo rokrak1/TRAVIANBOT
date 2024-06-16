@@ -104,6 +104,10 @@ export const createNewPageAndExecuteRaid = async (page: Page, oasis: OasisPositi
   await delay(700, 800);
 
   const raidStatus = await executeOasisRaid(newPage, raidConfiguration);
+
+  if (raidStatus.status === LoggerLevels.SUCCESS) {
+    oasis.wasSend = true;
+  }
   await newPage.close();
 
   return raidStatus;
@@ -160,12 +164,19 @@ export const executeOasisRaid = async (page: Page, raidConfiguration: OasisRaidC
     };
 
   const parsedCount = parseValue(troopCount);
-  console.log("PARSEEED:", parsedCount, requiredTroops);
-  const minTroopCount = attackingTroop.type === "infantry" ? 200 : 50;
-  if (parsedCount < requiredTroops && parsedCount < minTroopCount)
+  const minTroopCount = attackingTroop.type === "infantry" ? 200 : 30;
+
+  if (parsedCount < minTroopCount)
     return {
       status: LoggerLevels.ERROR,
       terminate: true,
+      message: "OASIS - not enough troops to execute raid",
+    };
+
+  if (parsedCount < requiredTroops)
+    return {
+      status: LoggerLevels.ERROR,
+      terminate: false,
       message: "OASIS - not enough troops to execute raid, terminating loop...",
     };
 
