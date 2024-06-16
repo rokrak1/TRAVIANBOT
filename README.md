@@ -1,24 +1,17 @@
-# TRAVIAN FUDEX BOT
+# TRAVCIBOT API
 
-Created by the myth, the man, the legend, Crab Master 3000
+1. Install dependencies `npm install`
+2. Set .env DEV_MODE to "true" `DEV_MODE=TRUE`, to avoid running workers and cron job
+3. Run server `npm start`
 
-## API
+## If you want to run workers locall run it with:
 
-### Common
+### Docker
+1. Place yourself in root folder
+2. `docker build -t travcibot .`
+3. `docker run -d --restart=always --name travcibot -p 8000:8000 -v /var/run/docker.sock:/var/run/docker.sock travcibot`
 
-- clickResourceSlot
-- clickNavigationSlot
-- getResourceAmount
-
-### Quests
-
-- checkIfQuestCompleted
-  Checks if quest is completed and collect it
-
-### HERO
-
-- getAvailableHeroResources
-  Checks how many resources does hero have
-
-- collectResourcesFromHero(page, optionalEResourceType?)
-  Collects all resources from hero or a single one
+### No docker
+1. Place yourself in root folder
+2. `npx tsx`
+3. `node dist/app.js`
