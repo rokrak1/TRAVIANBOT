@@ -108,7 +108,7 @@ export function calculateRequiredTroopsForMinimalLossAndTroopsUsed(attckTroop: U
   const subtractor = 0.01;
   /*  console.log("OUT-totalDefence:", totalDefence);
   console.log("offenceSingleTroop:", offenceSingleTroop); */
-  let isRewardWorth = false;
+
   let troopsRequired = 0;
   for (let i = maxPercent; i > 0; i -= subtractor) {
     let requiredTroops = calculateRequiredTroops(i, totalDefence, offenceSingleTroop);
@@ -128,7 +128,6 @@ export function calculateRequiredTroopsForMinimalLossAndTroopsUsed(attckTroop: U
     console.log("------------------");
     const totalResourcesLostWithFactor = factor === 0 ? 0 : totalReward / factor;
     if (totalResourcesLost <= totalResourcesLostWithFactor) {
-      isRewardWorth = true;
       troopsRequired = requiredTroops;
       /* console.log("totalResourcesLost:", totalResourcesLost);
       console.log("totalUnitsLost:", totalUnitsLost);

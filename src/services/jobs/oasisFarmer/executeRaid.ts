@@ -77,6 +77,10 @@ export const createNewPageAndExecuteRaid = async (page: Page, oasis: OasisPositi
     };
   }
 
+  const maxTroops = 800;
+  if (requiredTroops > maxTroops)
+    return { status: LoggerLevels.ERROR, terminate: false, message: `OASIS - max troops value exceeded ${maxTroops}` };
+
   const raidConfiguration: OasisRaidConfiguration = {
     ...oasis,
     requiredTroops,
