@@ -3,7 +3,7 @@ import { clickNavigationSlot } from "./jobs/travianActions/clicker";
 import { LoggerLevels, serverLogger } from "../config/logger";
 import { TravianAccountInfo } from "../utils/CronManager";
 import { firstSteps } from "./funcs/firstSteps";
-import { configureBrowser } from "./funcs/browserConfiguration";
+import { BrowserInstance } from "./funcs/browserConfiguration";
 import { BotType } from "./utils/database";
 import { removeUserData } from "./utils";
 import { startVillageBuilder, startFarmer, startOasisFarmer } from "./jobs";
@@ -14,8 +14,6 @@ export const travianStart = async (
   configurations: TravianAccountInfo,
   additionalConfiguration?: OasisAdditionalConfiguration
 ) => {
-  let browser;
-
   try {
     const { type } = configurations;
 
@@ -24,10 +22,19 @@ export const travianStart = async (
       return;
     }
 
-    // Launch Browser with configuration
-    const { page, browser: currBrowser } = await configureBrowser(botId, configurations);
-    browser = currBrowser;
+    // Create new Browser with configuration
+    const browser = BrowserInstance.getInstance();
+    await browser.init(botId, configurations.proxyUsername, configurations.proxyPassword);
+    const page = await browser.createPage();
 
+    await delay(1000, 2000);
+    let page2 = await browser.createPage();
+
+    await page2.goto("https://www.travian.com/");
+    await delay(1000, 2000);
+
+    await page2.close();
+    return;
     // First steps that should be done on every bot
     await firstSteps(page, configurations);
 
@@ -62,8 +69,6 @@ export const travianStart = async (
     await serverLogger(LoggerLevels.ERROR, `Error starting bot: ${e}`);
   } finally {
     // Make sure to close the browser even if there is an error
-    if (browser && !process.env.DEV_MODE) {
-      await browser.close();
-    }
+    await BrowserInstance.getInstance().closeBrowser();
   }
 };
