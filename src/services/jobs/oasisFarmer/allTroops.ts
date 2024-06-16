@@ -1,7 +1,13 @@
 import { OasisPosition } from "./dataFetching";
 import { UnitInfo } from "./lossCalculator";
-import { Unit } from "./types";
+import { Tribes, Unit } from "./types";
 import troops from "./troops.json";
+
+export const oases: OasisPosition[] = [];
+export const troopsConfig = {
+  selectedTroops: [] as UnitInfo[],
+  selectedTribe: Tribes.GAUL,
+};
 
 export const romanTroops = {
   Legionnaire: "u1",
@@ -62,30 +68,29 @@ export const allTroops = {
   Animals: animals,
 };
 
-export const getAttackingTroop = (
-  tribe: string,
-  attackingTroops: { name: Unit; level: number }[]
-) => {
-  const selectedUnits = troops.find((t) => t.tribe === tribe)
-    ?.units as unknown as UnitInfo[];
+export const getAttackingTroop = (tribe: string, attackingTroop: { name: Unit; level: number }): UnitInfo => {
+  const selectedUnits = troops.find((t) => t.tribe === tribe)?.units as unknown as UnitInfo[];
   if (!selectedUnits) {
     throw new Error("Tribe not found in troops.json");
   }
 
-  const selectedTroops = selectedUnits.filter((troop) => {
-    return attackingTroops.map((at) => at.name).includes(troop.name as Unit);
+  const selectedTroop = selectedUnits.find((troop) => {
+    return attackingTroop.name.includes(troop.name as Unit);
   });
 
-  // For now lets just take single troop
-  const correctAttackingTroop = attackingTroops.find((at) =>
-    selectedTroops.map((t) => t.name).includes(at.name)
-  );
-  return { ...selectedTroops[0], level: correctAttackingTroop!.level };
+  if (!selectedTroop) {
+    throw new Error("Troop not found in troops.json");
+  }
+
+  return { ...selectedTroop, level: attackingTroop.level };
+};
+
+export const getAttackingTroops = (tribe: string, attackingTroops: { name: Unit; level: number }[]): UnitInfo[] => {
+  return attackingTroops.map((attackingTroop) => getAttackingTroop(tribe, attackingTroop));
 };
 
 export const getNatureTroops = (oasis: OasisPosition) => {
-  const natureUnits = troops.find((t) => t.tribe === "Nature")
-    ?.units as unknown as UnitInfo[];
+  const natureUnits = troops.find((t) => t.tribe === "Nature")?.units as unknown as UnitInfo[];
 
   return Object.keys(oasis.units).map((unitName) => {
     return {

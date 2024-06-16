@@ -3,8 +3,9 @@ import { clickNavigationSlot } from "../travianActions/clicker";
 import { NavigationTypes } from "../villageBuilder/navigationSlots";
 import { delay } from "../../../utils";
 import { fetchOasisFromPositionNew } from "./dataFetching";
-import { oases } from "../startOasisFarmer";
+import { oases } from "./allTroops";
 import { LoggerLevels } from "../../../config/logger";
+import { getOnlyNewOasis, getRichOasis } from "./fetchOasis";
 
 const positionsInterceptor = async (page: Page) => {
   // Function to handle request events
@@ -13,9 +14,11 @@ const positionsInterceptor = async (page: Page) => {
     const request = response.request();
     if (request.url().includes("api/v1/map/position")) {
       const data = await response.json();
-      const getOases = fetchOasisFromPositionNew(data.tiles);
-      if (getOases) {
-        oases.push(...getOases);
+      const newOases = fetchOasisFromPositionNew(data.tiles);
+      if (newOases) {
+        const onlyNewOasis = getOnlyNewOasis(oases, newOases);
+        const richOases = getRichOasis(onlyNewOasis);
+        oases.push(...richOases);
         console.log(oases.length);
       }
     }
@@ -78,12 +81,7 @@ export const goToMapFetchBoundingBox = async (page: Page) => {
 };
 
 // Function to create the exploration grid
-export function createExplorationGrid(
-  maxTop: number,
-  maxBottom: number,
-  maxLeft: number,
-  maxRight: number
-) {
+export function createExplorationGrid(maxTop: number, maxBottom: number, maxLeft: number, maxRight: number) {
   const width = maxLeft + maxRight + 1;
   const height = maxTop + maxBottom + 1;
   const grid = Array(height)
@@ -91,7 +89,7 @@ export function createExplorationGrid(
     .map(() => Array(width).fill("?"));
   const startX = maxLeft;
   const startY = maxTop;
-  grid[startY][startX] = "x"; // Start position
+
   return { grid, startX, startY };
 }
 

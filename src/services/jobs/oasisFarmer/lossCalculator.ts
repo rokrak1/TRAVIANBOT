@@ -17,24 +17,12 @@ export interface UnitInfo {
   level?: number;
 }
 
-export function calculateRaidLosses(
-  attackingUnits: UnitInfo[],
-  defenderUnits: UnitInfo[]
-) {
-  const unitType =
-    attackingUnits[0].type === "infantry"
-      ? "defenseInfantry"
-      : "defenseCavalry";
+export function calculateRaidLosses(attackingUnits: UnitInfo[], defenderUnits: UnitInfo[]) {
+  const unitType = attackingUnits[0].type === "infantry" ? "defenseInfantry" : "defenseCavalry";
 
-  let totalOffense = attackingUnits.reduce(
-    (total, unit) => total + unit.count * unit.offense,
-    0
-  );
+  let totalOffense = attackingUnits.reduce((total, unit) => total + unit.count * unit.offense, 0);
 
-  let totalDefense = defenderUnits.reduce(
-    (total, unit) => total + unit.count * unit[unitType],
-    0
-  );
+  let totalDefense = defenderUnits.reduce((total, unit) => total + unit.count * unit[unitType], 0);
   let casualtyPercent: number;
 
   if (totalOffense > totalDefense) {
@@ -56,10 +44,7 @@ export function calculateRaidLosses(
     };
   });
 
-  const totalResourcesLost = losses.reduce(
-    (total, unit) => total + unit.lostResources,
-    0
-  );
+  const totalResourcesLost = losses.reduce((total, unit) => total + unit.lostResources, 0);
 
   const totalUnitsLost = losses.reduce((total, unit) => total + unit.losses, 0);
 
@@ -101,84 +86,55 @@ export function calculateRequiredTroops(
 const calucalteOffenseBasedOnTroopLevel = (troop: UnitInfo, upkeep: number) => {
   const off = troop.offense;
   const level = troop.level!;
-  const formula =
-    off + (off + 300 * (upkeep / 7)) * (Math.pow(1.007, level) - 1);
+  const formula = off + (off + 300 * (upkeep / 7)) * (Math.pow(1.007, level) - 1);
   return formula;
 };
 
-export function calculateRequiredTroopsForMinimalLossAndTroopsUsed(
-  attckTroop: UnitInfo,
-  natureTroops: UnitInfo[]
-) {
-  const attackingTroopOffenseWithLevel = calucalteOffenseBasedOnTroopLevel(
-    attckTroop,
-    attckTroop.upkeep
-  );
+export function calculateRequiredTroopsForMinimalLossAndTroopsUsed(attckTroop: UnitInfo, natureTroops: UnitInfo[]) {
+  const attackingTroopOffenseWithLevel = calucalteOffenseBasedOnTroopLevel(attckTroop, attckTroop.upkeep);
   //console.log(attackingTroopOffenseWithLevel);
   const attackingTroop = {
     ...attckTroop,
     offense: parseFloat(attackingTroopOffenseWithLevel.toFixed(2)),
   } as UnitInfo;
 
-  const unitType =
-    attackingTroop.type === "infantry" ? "defenseInfantry" : "defenseCavalry";
-  const totalDefence = natureTroops.reduce(
-    (total, u) => total + u.count * u[unitType],
-    0
-  );
-  const totalReward = natureTroops.reduce(
-    (total, u) => total + u.count * u.reward,
-    0
-  );
+  const unitType = attackingTroop.type === "infantry" ? "defenseInfantry" : "defenseCavalry";
+  const totalDefence = natureTroops.reduce((total, u) => total + u.count * u[unitType], 0);
+  const totalReward = natureTroops.reduce((total, u) => total + u.count * u.reward, 0);
 
   const offenceSingleTroop = attackingTroop.offense;
 
   const maxPercent = 0.7;
   const subtractor = 0.01;
-  // console.log("OUT-totalDefence:", totalDefence);
-  // console.log("offenceSingleTroop:", offenceSingleTroop);
+  /*  console.log("OUT-totalDefence:", totalDefence);
+  console.log("offenceSingleTroop:", offenceSingleTroop); */
   let isRewardWorth = false;
   let troopsRequired = 0;
   for (let i = maxPercent; i > 0; i -= subtractor) {
-    let requiredTroops = calculateRequiredTroops(
-      i,
-      totalDefence,
-      offenceSingleTroop
-    );
+    let requiredTroops = calculateRequiredTroops(i, totalDefence, offenceSingleTroop);
     const attackingTroopWithCount = {
       ...attackingTroop,
       count: requiredTroops,
     };
-    const calculateLosses = calculateRaidLosses(
-      [attackingTroopWithCount],
-      natureTroops
-    );
+    const calculateLosses = calculateRaidLosses([attackingTroopWithCount], natureTroops);
     if (!calculateLosses) {
       continue;
     }
 
     const { totalResourcesLost, totalUnitsLost } = calculateLosses;
-
-    let factor = totalReward > 12000 ? 4 : totalReward < 3100 ? 0 : 2.5;
     /* console.log("requiredTroops:", requiredTroops);
+    console.log("TotalUnitsLost:", totalUnitsLost); */
+    let factor = totalReward > 12000 ? 4 : totalReward < 3100 ? 0 : 2.5;
     console.log("------------------");
-    console.log("factor:", factor); */
-    const totalResourcesLostWithFactor =
-      factor === 0 ? 0 : totalReward / factor;
+    const totalResourcesLostWithFactor = factor === 0 ? 0 : totalReward / factor;
     if (totalResourcesLost <= totalResourcesLostWithFactor) {
       isRewardWorth = true;
       troopsRequired = requiredTroops;
-      /* console.log(
-        "******************BINGBINGVBINGBING*******************************"
-      );
-      console.log("totalResourcesLost:", totalResourcesLost);
+      /* console.log("totalResourcesLost:", totalResourcesLost);
       console.log("totalUnitsLost:", totalUnitsLost);
       console.log("totalReward:", totalReward); */
-      break;
+      return troopsRequired;
     }
-  }
-  if (isRewardWorth) {
-    return troopsRequired;
   }
   return 0;
 }

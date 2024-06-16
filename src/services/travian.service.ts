@@ -27,14 +27,6 @@ export const travianStart = async (
     await browser.init(botId, configurations.proxyUsername, configurations.proxyPassword);
     const page = await browser.createPage();
 
-    await delay(1000, 2000);
-    let page2 = await browser.createPage();
-
-    await page2.goto("https://www.travian.com/");
-    await delay(1000, 2000);
-
-    await page2.close();
-    return;
     // First steps that should be done on every bot
     await firstSteps(page, configurations);
 
@@ -44,23 +36,19 @@ export const travianStart = async (
     } else if (type === BotType.FARMER) {
       await startFarmer(page);
     } else if (type === BotType.OASIS_FARMER) {
-      await startOasisFarmer(
-        page,
-        configurations.travianDomain,
-        additionalConfiguration || ({} as OasisAdditionalConfiguration)
-      );
+      await startOasisFarmer(page, additionalConfiguration || ({} as OasisAdditionalConfiguration));
     }
 
     // Do some random clicks to make it look more human (2 to 5 clicks)
     // TODO: Maybe this could be expanded to opening reports, checking other villages, etc.
-    /*   const randomClicks = Math.floor(Math.random() * 3) + 2;
+    const randomClicks = Math.floor(Math.random() * 3) + 2;
     for (let i = 0; i < randomClicks; i++) {
       await clickNavigationSlot(page);
       await delay(1100, 1900);
     }
 
     // Close browser
-    await delay(3278, 5122); */
+    await delay(3278, 5122);
   } catch (e) {
     console.error(e);
 

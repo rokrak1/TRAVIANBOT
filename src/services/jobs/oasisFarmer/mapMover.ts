@@ -1,13 +1,16 @@
 import { Page } from "puppeteer";
 import { delay } from "../../../utils";
 import { humanLikeMouseMove } from "./humanLikeMove";
-import { oases } from "../startOasisFarmer";
+import { oases } from "./allTroops";
+import { LoggerLevels } from "../../../config/logger";
+import { createNewPageAndExecuteRaid } from "./executeRaid";
 
 enum Moves {
   UP = "up",
   DOWN = "down",
   LEFT = "left",
   RIGHT = "right",
+  CENTER = "center",
 }
 
 interface MapInfo {
@@ -21,6 +24,7 @@ interface MapInfo {
 
 /**
  * Move the map in the specified direction
+ * - Moves around map to fetch all oasis
  * - After moving it returns the cursor to the center
  */
 
@@ -55,7 +59,12 @@ const moveMouseAcrossMap = async (
   await humanLikeMouseMove(page, mapX + mapWidth - offset, mapY + mapHeight - offset, centerX, centerY, false);
 };
 
-const moveMap = async (page: Page, move: Moves, { mapHeight, mapWidth, mapX, mapY, centerX, centerY }: MapInfo) => {
+const moveMap = async (
+  page: Page,
+  move: Moves,
+  { mapHeight, mapWidth, mapX, mapY, centerX, centerY }: MapInfo,
+  isAlreadyExplored: boolean
+) => {
   const offSet = 10;
   switch (move) {
     case Moves.UP:
@@ -83,15 +92,19 @@ const moveMap = async (page: Page, move: Moves, { mapHeight, mapWidth, mapX, map
       await humanLikeMouseMove(page, mapX + mapWidth - offSet, centerY, mapX + offSet, centerY, true);
       await humanLikeMouseMove(page, mapX + offSet, centerY, centerX, centerY, false);
       break;
+    case Moves.CENTER:
+      await moveMouseAcrossMap(page, centerX, centerY, mapWidth, mapX, mapHeight, mapY, offSet);
   }
+  if (isAlreadyExplored || move === Moves.CENTER) return;
   await moveMouseAcrossMap(page, centerX, centerY, mapWidth, mapX, mapHeight, mapY, offSet);
-  await delay(700, 800);
 };
 
 const findClosestUnvisitedPositionWithDirections = (currentX: number, currentY: number, grid: string[][]) => {
   let closest = null;
   let minDist = Infinity;
-  let directions = [];
+  let directions = [Moves.CENTER];
+
+  if (grid[currentY][currentX] === "?") return { closest: { x: currentX, y: currentY }, directions };
 
   for (let y = 0; y < grid.length; y++) {
     for (let x = 0; x < grid[y].length; x++) {
@@ -199,7 +212,7 @@ interface ClickableSquares {
   clickPosition: { x: number; y: number };
 }
 
-const findVisibleValues = async (page: Page): Promise<ClickableSquares[]> => {
+const findVisibleValues = async (page: Page, mapInfo: MapInfo): Promise<ClickableSquares[]> => {
   const { values: xValues, offsetParent: xOffset } = await findVisibleXValues(page, "x");
   const { values: yValues, offsetParent: yOffset } = await findVisibleXValues(page, "y");
 
@@ -226,8 +239,15 @@ const findVisibleValues = async (page: Page): Promise<ClickableSquares[]> => {
     });
   };
 
+  const mapBoundingBox = {
+    x: mapInfo.mapX,
+    y: mapInfo.mapY,
+    width: mapInfo.mapWidth,
+    height: mapInfo.mapHeight,
+  };
+
   const adjustClickPosition = (x: number, y: number, bbox: BBox) => {
-    const offset = 5; // Adjust this value as needed
+    const offset = 5;
 
     unavailablePositions.forEach((unavailable) => {
       if (!unavailable) return;
@@ -240,6 +260,12 @@ const findVisibleValues = async (page: Page): Promise<ClickableSquares[]> => {
         y = y < unavailable.y + unavailable.height / 2 ? bbox.y + offset : bbox.y + bbox.height - offset;
       }
     });
+
+    // Adjust based on map bounding box
+    if (x < mapBoundingBox.x) x = mapBoundingBox.x + offset;
+    if (x > mapBoundingBox.x + mapBoundingBox.width) x = mapBoundingBox.x + mapBoundingBox.width - offset;
+    if (y < mapBoundingBox.y) y = mapBoundingBox.y + offset;
+    if (y > mapBoundingBox.y + mapBoundingBox.height) y = mapBoundingBox.y + mapBoundingBox.height - offset;
 
     return { x, y };
   };
@@ -275,12 +301,19 @@ const compareValuesAndClickOasis = async (page: Page, clickableSquares: Clickabl
       if (oasis.position.x === clickableSquare.x && oasis.position.y === clickableSquare.y) {
         await page.mouse.click(clickableSquare.clickPosition.x, clickableSquare.clickPosition.y);
         await delay(1000, 1200);
+
+        const raidStatus = await createNewPageAndExecuteRaid(page, oasis);
+
+        if (raidStatus.terminate) return raidStatus;
+
         const getCloseButton = await page.$(".dialogCancelButton");
         if (!getCloseButton) {
+          await page.logger(LoggerLevels.ERROR, "No close button found");
           console.log("No close button found");
           return;
         }
         await getCloseButton.click();
+
         await delay(1000, 1100);
       }
     }
@@ -302,7 +335,8 @@ export const startMovingMap = async (
     }
 
     for (let direction of directions) {
-      await moveMap(page, direction, mapInfo);
+      const isAlreadyExplored = grid[currentY][currentX] === "x";
+      await moveMap(page, direction, mapInfo, isAlreadyExplored);
       switch (direction) {
         case Moves.UP:
           currentY--;
@@ -319,9 +353,15 @@ export const startMovingMap = async (
       }
       grid[currentY][currentX] = "x";
     }
-    const clickableSquares = await findVisibleValues(page);
-
-    await compareValuesAndClickOasis(page, clickableSquares);
+    const clickableSquares = await findVisibleValues(page, mapInfo);
+    const raidStatus = await compareValuesAndClickOasis(page, clickableSquares);
+    if (raidStatus?.terminate) return raidStatus;
   }
+
   console.log("Finished exploring");
+  return {
+    status: LoggerLevels.SUCCESS,
+    terminate: false,
+    message: "Finished exploring",
+  };
 };

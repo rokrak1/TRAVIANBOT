@@ -1,12 +1,13 @@
 import { ElementHandle, Page } from "puppeteer";
-import { delay } from "../../../utils";
-import { allTroops } from "./allTroops";
+import { delay, parseValue } from "../../../utils";
+import { allTroops, getNatureTroops, troopsConfig } from "./allTroops";
 import { clickNavigationSlot } from "../travianActions/clicker";
 import { NavigationTypes } from "../villageBuilder/navigationSlots";
 import { Tribes } from "./types";
-import { UnitInfo } from "./lossCalculator";
+import { UnitInfo, calculateRequiredTroopsForMinimalLossAndTroopsUsed } from "./lossCalculator";
 import { OasisPosition } from "./dataFetching";
 import { LoggerLevels } from "../../../config/logger";
+import { BrowserInstance } from "../../funcs/browserConfiguration";
 
 export interface OasisRaidConfiguration extends OasisPosition {
   requiredTroops: number;
@@ -15,100 +16,29 @@ export interface OasisRaidConfiguration extends OasisPosition {
 }
 
 export interface RaidStatus {
-  status: boolean;
+  status: LoggerLevels;
   terminate: boolean;
   message: string;
 }
 
-export const executeOasisRaid = async (
-  page: Page,
-  raidConfiguration: OasisRaidConfiguration
-): Promise<RaidStatus> => {
-  const {
-    position: { x, y },
-    requiredTroops,
-    attackingTroop,
-    tribe,
-  } = raidConfiguration;
-
-  if (!page.url().includes("karte.php")) {
-    await clickNavigationSlot(page, NavigationTypes.MAP);
-  }
-
-  await delay(500, 600);
-  // Write x coordinate
-  const xCordInput = await page.$(".xCoord input");
-  if (!xCordInput)
-    return {
-      status: false,
-      terminate: false,
-      message: "OASIS - x coordinate input not found",
-    };
-  await writeCoordiantes(page, x, xCordInput);
-
-  // Write y coordinate
-  const yCordInput = await page.$(".yCoord input");
-  if (!yCordInput)
-    return {
-      status: false,
-      terminate: false,
-      message: "OASIS - y coordinate input not found",
-    };
-  await writeCoordiantes(page, y, yCordInput);
-
-  // Click search button
-  const OKButton = await page.$("#mapCoordEnter button");
-  if (!OKButton)
-    return {
-      status: false,
-      terminate: false,
-      message: "OASIS - ok button not found",
-    };
-  await OKButton.click();
-  await delay(1000, 1500);
-
-  const mapContainer = await page.$("#mapContainer");
-  if (!mapContainer)
-    return {
-      status: false,
-      terminate: false,
-      message: "OASIS - map container not found",
-    };
-
-  const mapContainerBox = await mapContainer.boundingBox();
-  if (!mapContainerBox)
-    return {
-      status: false,
-      terminate: false,
-      message: "OASIS - map container box not found",
-    };
-
-  await page.mouse.move(
-    mapContainerBox.x + mapContainerBox.width / 2,
-    mapContainerBox.y + mapContainerBox.height / 2
-  );
-  await page.mouse.click(
-    mapContainerBox.x + mapContainerBox.width / 2,
-    mapContainerBox.y + mapContainerBox.height / 2
-  );
-
-  // await so popup is loaded
-  await delay(697, 1102);
-
+const getRaidLink = async (page: Page) => {
   const optionsContainer = await page.$(".detailImage .options");
-  if (!optionsContainer)
-    return {
-      status: false,
-      terminate: false,
-      message: "OASIS - options container not found",
-    };
+  if (!optionsContainer) {
+    await page.logger(LoggerLevels.ERROR, "No options container found");
+    console.log("No options container found");
+    return null;
+  }
   const options = await optionsContainer.$$(".option");
+
+  if (!options?.length) {
+    await page.logger(LoggerLevels.ERROR, "No options found");
+    console.log("No options found");
+    return null;
+  }
 
   let optionIndexWithBuild = -1;
   for (let option of options) {
-    const optionText = await option.evaluate(
-      (el) => el.querySelector("a")?.textContent
-    );
+    const optionText = await option.evaluate((el) => el.querySelector("a")?.textContent);
     if (optionText?.includes("Raid unoccupied oasis")) {
       optionIndexWithBuild = options.indexOf(option);
       break;
@@ -116,15 +46,72 @@ export const executeOasisRaid = async (
   }
 
   const raidButton = options[optionIndexWithBuild];
-  if (!raidButton)
-    return {
-      status: false,
-      terminate: false,
-      message: "OASIS - raid button not found",
-    };
+  if (!raidButton) {
+    await page.logger(LoggerLevels.ERROR, "No raid button found");
+    console.log("No raid button found");
+    return null;
+  }
 
-  await raidButton.click();
-  await page.waitForNavigation({ waitUntil: "networkidle2" });
+  return raidButton.evaluate((el) => el.querySelector("a")?.href);
+};
+
+export const createNewPageAndExecuteRaid = async (page: Page, oasis: OasisPosition) => {
+  // Get Url for raid
+  const raidLink = await getRaidLink(page);
+  if (!raidLink) {
+    return {
+      status: LoggerLevels.ERROR,
+      terminate: false,
+      message: "OASIS - raid link not found",
+    };
+  }
+  const attackingTroop = troopsConfig.selectedTroops[0];
+  const tribe = troopsConfig.selectedTribe;
+  const natureTroops = getNatureTroops(oasis);
+  const requiredTroops = calculateRequiredTroopsForMinimalLossAndTroopsUsed(attackingTroop, natureTroops);
+  if (!requiredTroops) {
+    return {
+      status: LoggerLevels.ERROR,
+      terminate: true,
+      message: "OASIS - required troops not found",
+    };
+  }
+
+  const raidConfiguration: OasisRaidConfiguration = {
+    ...oasis,
+    requiredTroops,
+    attackingTroop,
+    tribe,
+  };
+
+  // Open new tab
+  const newPage = await BrowserInstance.getInstance().createPage();
+  await newPage.goto(raidLink);
+  try {
+    await newPage.waitForSelector("#build", { timeout: 5000 });
+  } catch (e) {
+    await newPage.close();
+    return {
+      status: LoggerLevels.ERROR,
+      terminate: false,
+      message: "OASIS - build button not found",
+    };
+  }
+  await delay(700, 800);
+
+  const raidStatus = await executeOasisRaid(newPage, raidConfiguration);
+  await newPage.close();
+
+  return raidStatus;
+};
+
+export const executeOasisRaid = async (page: Page, raidConfiguration: OasisRaidConfiguration): Promise<RaidStatus> => {
+  const {
+    position: { x, y },
+    requiredTroops,
+    attackingTroop,
+    tribe,
+  } = raidConfiguration;
 
   const troopsTd = await page.$$("#troops td");
 
@@ -139,7 +126,7 @@ export const executeOasisRaid = async (
     const troopImg = await troopsTd[i].$("img");
     if (!troopImg)
       return {
-        status: false,
+        status: LoggerLevels.ERROR,
         terminate: false,
         message: "OASIS - troop image not found",
       };
@@ -153,28 +140,27 @@ export const executeOasisRaid = async (
 
   if (!validTroopField)
     return {
-      status: false,
+      status: LoggerLevels.ERROR,
       terminate: false,
       message: "OASIS - valid troop field not found",
     };
 
   // Check if there is enough troops to send
-  const troopCount = await validTroopField.evaluate(
-    (el: HTMLTableCellElement) => el.querySelector("a")?.textContent
-  );
+  const troopCount = await validTroopField.evaluate((el: HTMLTableCellElement) => el.querySelector("a")?.textContent);
 
   if (!troopCount)
     return {
-      status: false,
+      status: LoggerLevels.ERROR,
       terminate: true,
-      message: "OASIS - troop count not found",
+      message: "OASIS - troop count not found, terminating loop...",
     };
 
-  const parsedCount = parseInt(troopCount);
-  console.log(parsedCount, requiredTroops);
-  if (parsedCount < requiredTroops)
+  const parsedCount = parseValue(troopCount);
+  console.log("PARSEEED:", parsedCount, requiredTroops);
+  const minTroopCount = attackingTroop.type === "infantry" ? 200 : 50;
+  if (parsedCount < requiredTroops && parsedCount < minTroopCount)
     return {
-      status: false,
+      status: LoggerLevels.ERROR,
       terminate: true,
       message: "OASIS - not enough troops to execute raid, terminating loop...",
     };
@@ -182,7 +168,7 @@ export const executeOasisRaid = async (
   const inputField = await validTroopField.$("input");
   if (!inputField)
     return {
-      status: false,
+      status: LoggerLevels.ERROR,
       terminate: false,
       message: "OASIS - input field not found",
     };
@@ -194,7 +180,7 @@ export const executeOasisRaid = async (
   const sendButton = await page.$("form button.green");
   if (!sendButton)
     return {
-      status: false,
+      status: LoggerLevels.ERROR,
       terminate: false,
       message: "OASIS - send button not found",
     };
@@ -206,28 +192,21 @@ export const executeOasisRaid = async (
   const confirmButton = await page.$("button.rallyPointConfirm");
   if (!confirmButton)
     return {
-      status: false,
+      status: LoggerLevels.ERROR,
       terminate: false,
       message: "OASIS - confirm button not found",
     };
   await confirmButton.click();
 
-  await page.logger(
-    LoggerLevels.SUCCESS,
-    `Started raiding oasis at ${x}|${y} with ${requiredTroops} troops`
-  );
+  await page.logger(LoggerLevels.SUCCESS, `Started raiding oasis at ${x}|${y} with ${requiredTroops} troops`);
   return {
-    status: true,
+    status: LoggerLevels.SUCCESS,
     terminate: false,
     message: "OASIS - raid executed",
   };
 };
 
-export const writeCoordiantes = async (
-  page: Page,
-  coordinate: number,
-  element: ElementHandle<Element>
-) => {
+export const writeCoordiantes = async (page: Page, coordinate: number, element: ElementHandle<Element>) => {
   const inputValue = await element.evaluate((el: any) => el.value);
   await element.click();
   await page.keyboard.press("ArrowRight");

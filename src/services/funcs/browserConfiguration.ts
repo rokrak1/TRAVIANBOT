@@ -15,7 +15,6 @@ interface BrowserConfiguration {
 export class BrowserInstance {
   private static instance: BrowserInstance;
   private browser: Browser | null = null;
-  private pages: Map<string, Page> = new Map();
   private browserConfiguration: BrowserConfiguration = {} as BrowserConfiguration;
 
   private constructor() {}
@@ -75,7 +74,6 @@ export class BrowserInstance {
     // Bypass Recaptcha
     await bypassRecaptcha(page);
 
-    this.pages.set(botId, page);
     return page;
   }
 
