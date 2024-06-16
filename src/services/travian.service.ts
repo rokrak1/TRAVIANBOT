@@ -3,34 +3,29 @@ import { clickNavigationSlot } from "./jobs/travianActions/clicker";
 import { LoggerLevels, serverLogger } from "../config/logger";
 import { TravianAccountInfo } from "../utils/CronManager";
 import { firstSteps } from "./funcs/firstSteps";
-import { configureBrowser } from "./funcs/browserConfiguration";
+import { BrowserInstance } from "./funcs/browserConfiguration";
 import { BotType } from "./utils/database";
 import { removeUserData } from "./utils";
 import { startVillageBuilder, startFarmer, startOasisFarmer } from "./jobs";
+import { OasisAdditionalConfiguration } from "./jobs/oasisFarmer/types";
 
 export const travianStart = async (
   botId: string,
   configurations: TravianAccountInfo,
-  additionalConfiguration?: object
+  additionalConfiguration?: OasisAdditionalConfiguration
 ) => {
-  let browser;
   try {
     const { type } = configurations;
 
     if (!type) {
-      await serverLogger(
-        LoggerLevels.ERROR,
-        `Bot type is not defined for botId: ${botId}`
-      );
+      await serverLogger(LoggerLevels.ERROR, `Bot type is not defined for botId: ${botId}`);
       return;
     }
 
-    // Launch Browser with configuration
-    const { page, browser: currBrowser } = await configureBrowser(
-      botId,
-      configurations
-    );
-    browser = currBrowser;
+    // Create new Browser with configuration
+    const browser = BrowserInstance.getInstance();
+    await browser.init(botId, configurations.proxyUsername, configurations.proxyPassword);
+    const page = await browser.createPage();
 
     // First steps that should be done on every bot
     await firstSteps(page, configurations);
@@ -41,11 +36,7 @@ export const travianStart = async (
     } else if (type === BotType.FARMER) {
       await startFarmer(page);
     } else if (type === BotType.OASIS_FARMER) {
-      await startOasisFarmer(
-        page,
-        configurations.travianDomain,
-        additionalConfiguration || {}
-      );
+      await startOasisFarmer(page, additionalConfiguration || ({} as OasisAdditionalConfiguration));
     }
 
     // Do some random clicks to make it look more human (2 to 5 clicks)
@@ -66,8 +57,6 @@ export const travianStart = async (
     await serverLogger(LoggerLevels.ERROR, `Error starting bot: ${e}`);
   } finally {
     // Make sure to close the browser even if there is an error
-    if (browser) {
-      !process.env.DEV_MODE && (await browser.close());
-    }
+    await BrowserInstance.getInstance().closeBrowser();
   }
 };

@@ -11,6 +11,11 @@ enum CronIntervals {
   EIGHT_MINUTES = "*/8 * * * *",
   NINE_MINUTES = "*/9 * * * *",
   TEN_MINUTES = "*/10 * * * *",
+  FIFTEEN_MINUTES = "*/15 * * * *",
+  HALF_HOUR = "*/30 * * * *",
+  ONE_HOUR = "0 * * * *",
+  TWO_HOURS = "0 */2 * * *",
+  THREE_HOURS = "0 */3 * * *",
 }
 
 interface TravianAccountInfo {

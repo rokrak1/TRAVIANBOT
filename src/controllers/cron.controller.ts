@@ -11,6 +11,7 @@ import { addCronJob } from "../services/cron.service";
 import { LoggerLevels, serverLogger } from "../config/logger";
 import { travianStop } from "../services/utils/database";
 import { removeUserData } from "../services/utils";
+import { OasisAdditionalConfiguration } from "../services/jobs/oasisFarmer/types";
 
 const cronManager = CronManager.getInstance();
 
@@ -19,7 +20,8 @@ interface StartRequestBody {
   interval: keyof typeof CronIntervals;
   botId: string;
   name: string;
-  additionalConfiguration?: object;
+  additionalConfiguration?: OasisAdditionalConfiguration;
+  run?: boolean;
 }
 
 interface Proxy {
@@ -84,7 +86,7 @@ export const getSupabaseActiveJobAndStartWorkersWithCron = async () => {
 class CronController {
   @post("/start")
   async start(req: FastifyRequest, reply: FastifyReply) {
-    const { options, interval, botId, name, additionalConfiguration } =
+    const { options, interval, botId, name, additionalConfiguration, run } =
       req.body as StartRequestBody;
 
     if (process.env.DEV_MODE) {
@@ -100,7 +102,12 @@ class CronController {
         additionalConfiguration || {}
       );
     }
-    reply.send({
+
+    if (run && !process.env.DEV_MODE) {
+      await travianStart(botId, options, additionalConfiguration);
+    }
+
+    return reply.send({
       status: `Cron job id ${botId} started with schedule ${CronIntervals[interval]}`,
     });
   }

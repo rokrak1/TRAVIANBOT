@@ -1,0 +1,730 @@
+[
+  {
+    "tribe": "Romans",
+    "units": [
+      {
+        "name": "Legionnaire",
+        "offense": 40,
+        "defenseInfantry": 35,
+        "defenseCavalry": 50,
+        "speed": 6,
+        "capacity": 50,
+        "cost": {
+          "lumber": 120,
+          "clay": 100,
+          "iron": 150,
+          "crop": 30,
+          "total": 400
+        },
+        "type": "infantry",
+        "upkeep": 1,
+        "training_time": "0:26:40"
+      },
+      {
+        "name": "Praetorian",
+        "offense": 30,
+        "defenseInfantry": 65,
+        "defenseCavalry": 35,
+        "speed": 5,
+        "capacity": 20,
+        "type": "infantry",
+        "cost": {
+          "lumber": 100,
+          "clay": 130,
+          "iron": 160,
+          "crop": 70,
+          "total": 460
+        },
+        "upkeep": 1,
+        "training_time": "0:29:20"
+      },
+      {
+        "name": "Imperian",
+        "offense": 70,
+        "defenseInfantry": 40,
+        "defenseCavalry": 25,
+        "speed": 7,
+        "capacity": 50,
+        "type": "infantry",
+        "cost": {
+          "lumber": 150,
+          "clay": 160,
+          "iron": 210,
+          "crop": 80,
+          "total": 600
+        },
+        "upkeep": 1,
+        "training_time": "0:32:00"
+      },
+      {
+        "name": "Equites Legati",
+        "offense": 0,
+        "defenseInfantry": 20,
+        "defenseCavalry": 10,
+        "speed": 16,
+        "capacity": 0,
+        "type": "calvary",
+        "cost": {
+          "lumber": 140,
+          "clay": 160,
+          "iron": 20,
+          "crop": 40,
+          "total": 360
+        },
+        "upkeep": 2,
+        "training_time": "0:22:40"
+      },
+      {
+        "name": "Equites Imperatoris",
+        "offense": 120,
+        "defenseInfantry": 65,
+        "defenseCavalry": 50,
+        "speed": 14,
+        "capacity": 100,
+        "type": "calvary",
+        "cost": {
+          "lumber": 550,
+          "clay": 440,
+          "iron": 320,
+          "crop": 100,
+          "total": 1410
+        },
+        "upkeep": 3,
+        "training_time": "0:44:00"
+      },
+      {
+        "name": "Equites Caesaris",
+        "offense": 180,
+        "defenseInfantry": 80,
+        "defenseCavalry": 105,
+        "speed": 10,
+        "capacity": 70,
+        "type": "calvary",
+        "cost": {
+          "lumber": 550,
+          "clay": 640,
+          "iron": 800,
+          "crop": 180,
+          "total": 2170
+        },
+        "upkeep": 4,
+        "training_time": "0:58:40"
+      },
+      {
+        "name": "Battering Ram",
+        "offense": 60,
+        "defenseInfantry": 30,
+        "defenseCavalry": 75,
+        "speed": 4,
+        "capacity": 0,
+        "cost": {
+          "lumber": 900,
+          "clay": 360,
+          "iron": 500,
+          "crop": 70,
+          "total": 1830
+        },
+        "upkeep": 3,
+        "training_time": "1:16:40"
+      },
+      {
+        "name": "Fire Catapult",
+        "offense": 75,
+        "defenseInfantry": 60,
+        "defenseCavalry": 10,
+        "speed": 3,
+        "capacity": 0,
+        "cost": {
+          "lumber": 950,
+          "clay": 1350,
+          "iron": 600,
+          "crop": 90,
+          "total": 2990
+        },
+        "upkeep": 6,
+        "training_time": "2:30:00"
+      },
+      {
+        "name": "Senator",
+        "offense": 50,
+        "defenseInfantry": 40,
+        "defenseCavalry": 30,
+        "speed": 4,
+        "capacity": 0,
+        "cost": {
+          "lumber": 30750,
+          "clay": 27200,
+          "iron": 45000,
+          "crop": 37500,
+          "total": 140450
+        },
+        "upkeep": 5,
+        "training_time": "25:11:40"
+      },
+      {
+        "name": "Settler",
+        "offense": "—",
+        "defenseInfantry": 80,
+        "defenseCavalry": 80,
+        "speed": 5,
+        "capacity": 3000,
+        "cost": {
+          "lumber": 4600,
+          "clay": 4200,
+          "iron": 5800,
+          "crop": 4400,
+          "total": 19000
+        },
+        "upkeep": 1,
+        "training_time": "7:28:20"
+      }
+    ]
+  },
+  {
+    "tribe": "Teutons",
+    "units": [
+      {
+        "name": "Clubswinger",
+        "offense": 40,
+        "defenseInfantry": 20,
+        "defenseCavalry": 5,
+        "speed": 7,
+        "capacity": 60,
+        "type": "infantry",
+        "cost": {
+          "lumber": 95,
+          "clay": 75,
+          "iron": 40,
+          "crop": 40,
+          "total": 250
+        },
+        "upkeep": 1,
+        "training_time": "0:12:00"
+      },
+      {
+        "name": "Spearman",
+        "offense": 10,
+        "defenseInfantry": 35,
+        "defenseCavalry": 60,
+        "speed": 7,
+        "capacity": 40,
+        "type": "infantry",
+        "cost": {
+          "lumber": 145,
+          "clay": 70,
+          "iron": 85,
+          "crop": 40,
+          "total": 340
+        },
+        "upkeep": 1,
+        "training_time": "0:18:40"
+      },
+      {
+        "name": "Axeman",
+        "offense": 60,
+        "defenseInfantry": 30,
+        "defenseCavalry": 30,
+        "speed": 6,
+        "capacity": 50,
+        "type": "infantry",
+        "cost": {
+          "lumber": 130,
+          "clay": 120,
+          "iron": 170,
+          "crop": 70,
+          "total": 490
+        },
+        "upkeep": 1,
+        "training_time": "0:20:00"
+      },
+      {
+        "name": "Scout",
+        "offense": 0,
+        "defenseInfantry": 10,
+        "defenseCavalry": 5,
+        "type": "infantry",
+        "speed": 9,
+        "capacity": 0,
+        "cost": {
+          "lumber": 160,
+          "clay": 100,
+          "iron": 50,
+          "crop": 50,
+          "total": 360
+        },
+        "upkeep": 1,
+        "training_time": "0:18:40"
+      },
+      {
+        "name": "Paladin",
+        "offense": 55,
+        "defenseInfantry": 100,
+        "defenseCavalry": 40,
+        "speed": 10,
+        "capacity": 110,
+        "type": "calvary",
+        "cost": {
+          "lumber": 370,
+          "clay": 270,
+          "iron": 290,
+          "crop": 75,
+          "total": 1005
+        },
+        "upkeep": 2,
+        "training_time": "0:40:00"
+      },
+      {
+        "name": "Teutonic Knight",
+        "offense": 150,
+        "defenseInfantry": 50,
+        "defenseCavalry": 75,
+        "speed": 9,
+        "capacity": 80,
+        "type": "calvary",
+        "cost": {
+          "lumber": 450,
+          "clay": 515,
+          "iron": 480,
+          "crop": 80,
+          "total": 1525
+        },
+        "upkeep": 3,
+        "training_time": "0:49:20"
+      },
+      {
+        "name": "Ram",
+        "offense": 65,
+        "defenseInfantry": 30,
+        "defenseCavalry": 80,
+        "speed": 4,
+        "capacity": 0,
+        "cost": {
+          "lumber": 1000,
+          "clay": 300,
+          "iron": 350,
+          "crop": 70,
+          "total": 1720
+        },
+        "upkeep": 3,
+        "training_time": "1:10:00"
+      },
+      {
+        "name": "Catapult",
+        "offense": 50,
+        "defenseInfantry": 60,
+        "defenseCavalry": 10,
+        "speed": 3,
+        "capacity": 0,
+        "cost": {
+          "lumber": 900,
+          "clay": 1200,
+          "iron": 600,
+          "crop": 60,
+          "total": 2760
+        },
+        "upkeep": 6,
+        "training_time": "2:30:00"
+      },
+      {
+        "name": "Chief",
+        "offense": 40,
+        "defenseInfantry": 60,
+        "defenseCavalry": 40,
+        "speed": 4,
+        "capacity": 0,
+        "cost": {
+          "lumber": 35500,
+          "clay": 26600,
+          "iron": 25000,
+          "crop": 27200,
+          "total": 114300
+        },
+        "upkeep": 4,
+        "training_time": "19:35:00"
+      },
+      {
+        "name": "Settler",
+        "offense": 10,
+        "defenseInfantry": 80,
+        "defenseCavalry": 80,
+        "speed": 5,
+        "capacity": 3000,
+        "cost": {
+          "lumber": 5800,
+          "clay": 4400,
+          "iron": 4600,
+          "crop": 5200,
+          "total": 20000
+        },
+        "upkeep": 1,
+        "training_time": "8:36:40"
+      }
+    ]
+  },
+  {
+    "tribe": "Gauls",
+    "units": [
+      {
+        "name": "Phalanx",
+        "offense": 15,
+        "defenseInfantry": 40,
+        "defenseCavalry": 50,
+        "speed": 7,
+        "capacity": 35,
+        "type": "infantry",
+        "cost": {
+          "lumber": 100,
+          "clay": 130,
+          "iron": 55,
+          "crop": 30,
+          "total": 315
+        },
+        "upkeep": 1,
+        "training_time": "0:17:20"
+      },
+      {
+        "name": "Swordsman",
+        "offense": 65,
+        "defenseInfantry": 35,
+        "defenseCavalry": 20,
+        "speed": 6,
+        "capacity": 45,
+        "type": "infantry",
+        "cost": {
+          "lumber": 140,
+          "clay": 150,
+          "iron": 185,
+          "crop": 60,
+          "total": 535
+        },
+        "upkeep": 1,
+        "training_time": "0:24:00"
+      },
+      {
+        "name": "Pathfinder",
+        "offense": 0,
+        "defenseInfantry": 20,
+        "defenseCavalry": 10,
+        "speed": 17,
+        "capacity": 0,
+        "type": "calvary",
+        "cost": {
+          "lumber": 170,
+          "clay": 150,
+          "iron": 20,
+          "crop": 40,
+          "total": 380
+        },
+        "upkeep": 2,
+        "training_time": "0:22:40"
+      },
+      {
+        "name": "Theutates Thunder",
+        "offense": 100,
+        "defenseInfantry": 25,
+        "defenseCavalry": 40,
+        "type": "calvary",
+        "speed": 19,
+        "capacity": 75,
+        "cost": {
+          "lumber": 350,
+          "clay": 450,
+          "iron": 230,
+          "crop": 60,
+          "total": 1090
+        },
+        "upkeep": 2,
+        "training_time": "0:41:20"
+      },
+      {
+        "name": "Druidrider",
+        "offense": 45,
+        "defenseInfantry": 115,
+        "defenseCavalry": 55,
+        "speed": 16,
+        "type": "calvary",
+        "capacity": 35,
+        "cost": {
+          "lumber": 360,
+          "clay": 330,
+          "iron": 280,
+          "crop": 120,
+          "total": 1090
+        },
+        "upkeep": 2,
+        "training_time": "0:42:40"
+      },
+      {
+        "name": "Haeduan",
+        "offense": 140,
+        "defenseInfantry": 60,
+        "defenseCavalry": 165,
+        "speed": 13,
+        "capacity": 65,
+        "type": "calvary",
+        "cost": {
+          "lumber": 500,
+          "clay": 620,
+          "iron": 675,
+          "crop": 170,
+          "total": 1965
+        },
+        "upkeep": 3,
+        "training_time": "0:52:00"
+      },
+      {
+        "name": "Ram",
+        "offense": 50,
+        "defenseInfantry": 30,
+        "defenseCavalry": 105,
+        "speed": 4,
+        "capacity": 0,
+        "cost": {
+          "lumber": 950,
+          "clay": 555,
+          "iron": 330,
+          "crop": 75,
+          "total": 1910
+        },
+        "upkeep": 3,
+        "training_time": "1:23:20"
+      },
+      {
+        "name": "Trebuchet",
+        "offense": 70,
+        "defenseInfantry": 45,
+        "defenseCavalry": 10,
+        "speed": 3,
+        "capacity": 0,
+        "cost": {
+          "lumber": 960,
+          "clay": 1450,
+          "iron": 630,
+          "crop": 90,
+          "total": 3130
+        },
+        "upkeep": 6,
+        "training_time": "2:30:00"
+      },
+      {
+        "name": "Chieftain",
+        "offense": 40,
+        "defenseInfantry": 50,
+        "defenseCavalry": 50,
+        "speed": 5,
+        "capacity": 0,
+        "cost": {
+          "lumber": 30750,
+          "clay": 45400,
+          "iron": 31000,
+          "crop": 37500,
+          "total": 144650
+        },
+        "upkeep": 4,
+        "training_time": "25:11:40"
+      },
+      {
+        "name": "Settler",
+        "offense": "—",
+        "defenseInfantry": 80,
+        "defenseCavalry": 80,
+        "speed": 5,
+        "capacity": 3000,
+        "cost": {
+          "lumber": 4400,
+          "clay": 5600,
+          "iron": 4200,
+          "crop": 3900,
+          "total": 18100
+        },
+        "upkeep": 1,
+        "training_time": "6:18:20"
+      }
+    ]
+  },
+  {
+    "tribe": "Nature",
+    "units": [
+      {
+        "name": "Rat",
+        "offense": 10,
+        "defenseInfantry": 25,
+        "defenseCavalry": 20,
+        "speed": 20,
+        "capacity": 0,
+        "cost": {
+          "lumber": 0,
+          "clay": 0,
+          "iron": 0,
+          "crop": 100,
+          "total": 100
+        },
+        "upkeep": 1,
+        "training_time": "0",
+        "reward": 160
+      },
+      {
+        "name": "Spider",
+        "offense": 20,
+        "defenseInfantry": 35,
+        "defenseCavalry": 40,
+        "speed": 20,
+        "capacity": 0,
+        "cost": {
+          "lumber": 0,
+          "clay": 0,
+          "iron": 0,
+          "crop": 0,
+          "total": 0
+        },
+        "upkeep": 1,
+        "training_time": "0",
+        "reward": 160
+      },
+      {
+        "name": "Snake",
+        "offense": 60,
+        "defenseInfantry": 40,
+        "defenseCavalry": 60,
+        "speed": 20,
+        "capacity": 0,
+        "cost": {
+          "lumber": 0,
+          "clay": 0,
+          "iron": 0,
+          "crop": 0,
+          "total": 0
+        },
+        "upkeep": 1,
+        "training_time": "0",
+        "reward": 160
+      },
+      {
+        "name": "Bat",
+        "offense": 80,
+        "defenseInfantry": 66,
+        "defenseCavalry": 50,
+        "speed": 20,
+        "capacity": 0,
+        "cost": {
+          "lumber": 0,
+          "clay": 0,
+          "iron": 0,
+          "crop": 0,
+          "total": 0
+        },
+        "upkeep": 1,
+        "training_time": "0",
+        "reward": 160
+      },
+      {
+        "name": "Wild Boar",
+        "offense": 50,
+        "defenseInfantry": 70,
+        "defenseCavalry": 33,
+        "speed": 20,
+        "capacity": 0,
+        "cost": {
+          "lumber": 0,
+          "clay": 0,
+          "iron": 0,
+          "crop": 0,
+          "total": 0
+        },
+        "upkeep": 2,
+        "training_time": "0",
+        "reward": 320
+      },
+      {
+        "name": "Wolf",
+        "offense": 100,
+        "defenseInfantry": 80,
+        "defenseCavalry": 70,
+        "speed": 20,
+        "capacity": 0,
+        "cost": {
+          "lumber": 0,
+          "clay": 0,
+          "iron": 0,
+          "crop": 0,
+          "total": 0
+        },
+        "upkeep": 2,
+        "training_time": "0",
+        "reward": 320
+      },
+      {
+        "name": "Bear",
+        "offense": 250,
+        "defenseInfantry": 140,
+        "defenseCavalry": 200,
+        "speed": 20,
+        "capacity": 0,
+        "cost": {
+          "lumber": 0,
+          "clay": 0,
+          "iron": 0,
+          "crop": 0,
+          "total": 0
+        },
+        "upkeep": 3,
+        "training_time": "0",
+        "reward": 480
+      },
+      {
+        "name": "Crocodile",
+        "offense": 450,
+        "defenseInfantry": 380,
+        "defenseCavalry": 240,
+        "speed": 20,
+        "capacity": 0,
+        "cost": {
+          "lumber": 0,
+          "clay": 0,
+          "iron": 0,
+          "crop": 0,
+          "total": 0
+        },
+        "upkeep": 3,
+        "training_time": "0",
+        "reward": 480
+      },
+      {
+        "name": "Tiger",
+        "offense": 200,
+        "defenseInfantry": 170,
+        "defenseCavalry": 250,
+        "speed": 20,
+        "capacity": 0,
+        "cost": {
+          "lumber": 0,
+          "clay": 0,
+          "iron": 0,
+          "crop": 0,
+          "total": 0
+        },
+        "upkeep": 3,
+        "training_time": "0",
+        "reward": 480
+      },
+      {
+        "name": "Elephant",
+        "offense": 600,
+        "defenseInfantry": 440,
+        "defenseCavalry": 520,
+        "speed": 20,
+        "capacity": 0,
+        "cost": {
+          "lumber": 0,
+          "clay": 0,
+          "iron": 0,
+          "crop": 0,
+          "total": 0
+        },
+        "upkeep": 5,
+        "training_time": "0",
+        "reward": 800
+      }
+    ]
+  }
+]

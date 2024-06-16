@@ -1,54 +1,86 @@
-import puppeteer from "puppeteer";
-import { TravianAccountInfo } from "../../utils/CronManager";
+import puppeteer, { Browser, Page } from "puppeteer";
 import { createLogger } from "../../config/logger";
 import { bypassRecaptcha } from "./bypassRecaptcha";
 
 export const userAgent =
   "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/111.0.0.0 Safari/537.36";
+const serverArgs = process.env.DEV_MODE ? [] : ["--no-zygote", "--single-process"];
 
-export const configureBrowser = async (
-  botId: string,
-  configurations: TravianAccountInfo
-) => {
-  const { proxyDomain, proxyUsername, proxyPassword } = configurations;
+interface BrowserConfiguration {
+  proxyUsername?: string;
+  proxyPassword?: string;
+  botId: string;
+}
 
-  // Launch Browser
-  const serverArgs = process.env.DEV_MODE
-    ? []
-    : ["--no-zygote", "--single-process"];
-  const browser = await puppeteer.launch({
-    ...(process.env.DEV_MODE && { headless: false }),
-    userDataDir: `./user_data/${botId}`,
-    args: [
-      `--window-size=1280,1024`,
-      `--proxy-server=${proxyDomain}`,
-      "--no-sandbox",
-      "--disabled-setupid-sandbox",
-      // These flags are needed so there is launched only single process, otherwise application disconnects from chrome but keeps it running in the background
-      ...serverArgs,
-    ],
-    defaultViewport: {
-      width: 1280,
-      height: 1024,
-    },
-  });
+export class BrowserInstance {
+  private static instance: BrowserInstance;
+  private browser: Browser | null = null;
+  private browserConfiguration: BrowserConfiguration = {} as BrowserConfiguration;
 
-  const page = await browser.newPage();
+  private constructor() {}
 
-  await page.setUserAgent(userAgent);
-  // Create new logger based on botId
-  page.logger = await createLogger(botId!);
+  public static getInstance(): BrowserInstance {
+    if (!BrowserInstance.instance) {
+      BrowserInstance.instance = new BrowserInstance();
+    }
+    return BrowserInstance.instance;
+  }
 
-  // Set up proxy
-  await page.authenticate({
-    username: proxyUsername,
-    password: proxyPassword,
-  });
+  public async init(botId: string, proxyUsername?: string, proxyPassword?: string) {
+    if (this.browser) {
+      return; // Already initialized
+    }
 
-  await page.setDefaultNavigationTimeout(0);
+    this.browser = await puppeteer.launch({
+      ...(process.env.DEV_MODE && { headless: false }),
+      userDataDir: `./user_data`,
+      args: [`--window-size=1280,1024`, "--no-sandbox", "--disabled-setupid-sandbox", ...serverArgs],
+      defaultViewport: {
+        width: 1280,
+        height: 1024,
+      },
+    });
 
-  // Bypass Recaptcha
-  await bypassRecaptcha(page);
+    this.browserConfiguration = {
+      botId,
+      proxyUsername,
+      proxyPassword,
+    };
+  }
 
-  return { browser, page };
-};
+  public async createPage() {
+    if (!this.browser) {
+      throw new Error("Browser is not initialized");
+    }
+
+    const { botId, proxyUsername, proxyPassword } = this.browserConfiguration;
+
+    const page = await this.browser.newPage();
+
+    await page.setUserAgent(userAgent);
+    // Create new logger based on botId
+    page.logger = await createLogger(botId);
+
+    if (proxyUsername && proxyPassword) {
+      // Set up proxy
+      await page.authenticate({
+        username: proxyUsername,
+        password: proxyPassword,
+      });
+    }
+
+    await page.setDefaultNavigationTimeout(0);
+
+    // Bypass Recaptcha
+    await bypassRecaptcha(page);
+
+    return page;
+  }
+
+  public async closeBrowser() {
+    if (this.browser && !process.env.DEV_MODE) {
+      await this.browser.close();
+      this.browser = null;
+    }
+  }
+}
