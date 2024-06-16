@@ -306,6 +306,8 @@ const compareValuesAndClickOasis = async (page: Page, clickableSquares: Clickabl
 
         if (raidStatus.terminate) return raidStatus;
 
+        if (raidStatus.status === LoggerLevels.ERROR) continue;
+
         const getCloseButton = await page.$(".dialogCancelButton");
         if (!getCloseButton) {
           await page.logger(LoggerLevels.ERROR, "No close button found");
