@@ -65,4 +65,6 @@ export interface OasisAdditionalConfiguration {
   maxLeft: number;
   maxRight: number;
   maxBottom: number;
+  startX: number;
+  startY: number;
 }
