@@ -74,7 +74,7 @@ export const createNewPageAndExecuteRaid = async (page: Page, oasis: OasisPositi
     return {
       status: LoggerLevels.ERROR,
       terminate: true,
-      message: "OASIS - required troops not found",
+      message: `OASIS (${oasis.position.x}|${oasis.position.y}) - required troops not found`,
     };
   }
 
