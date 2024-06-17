@@ -26,10 +26,8 @@ export const travianStart = async (
     const browser = BrowserInstance.getInstance();
     await browser.init(botId, configurations.proxyUsername, configurations.proxyPassword);
     const page = await browser.createPage();
-
     // First steps that should be done on every bot
     await firstSteps(page, configurations);
-
     // Proceed with bot type
     if (type === BotType.VILLAGE_BUILDER) {
       await startVillageBuilder(botId, page);
