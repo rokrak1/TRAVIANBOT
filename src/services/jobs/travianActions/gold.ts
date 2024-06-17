@@ -12,9 +12,7 @@ export const extendGoldPlanAndResources = async (page: Page) => {
 
   await checkFirstTimeGoldActivation(page);
 
-  const goldPlanExtendedOffers = await page.$$(
-    "#sidebarBoxInfobox li button.gold"
-  );
+  const goldPlanExtendedOffers = await page.$$("#sidebarBoxInfobox li button.gold");
 
   if (goldPlanExtendedOffers.length === 0) {
     await page.logger(LoggerLevels.INFO, "No gold extend offers found");
@@ -24,6 +22,12 @@ export const extendGoldPlanAndResources = async (page: Page) => {
 
   let { gold } = await getGoldAndSilver(page);
 
+  if (gold < 5) {
+    await page.logger(LoggerLevels.INFO, "Not enough gold to extend offers. Need 5 gold");
+    console.log("Not enough gold to extend offers");
+    return;
+  }
+
   for (let offer of goldPlanExtendedOffers) {
     const goldValue = await offer.evaluate((el) => {
       return el.querySelector("span.goldValue")?.textContent;
@@ -32,18 +36,12 @@ export const extendGoldPlanAndResources = async (page: Page) => {
 
     if (is5or10Gold) {
       if (gold < parseInt(goldValue)) {
-        await page.logger(
-          LoggerLevels.WARN,
-          `Not enough gold to extend offer. Need ${goldValue} gold`
-        );
+        await page.logger(LoggerLevels.WARN, `Not enough gold to extend offer. Need ${goldValue} gold`);
         console.log("Not enough gold to extend offer");
         continue;
       }
       const extendItem = goldValue === "5" ? "25% production" : "plus account";
-      await page.logger(
-        LoggerLevels.GOLD_SPENT,
-        `Extending gold offer for ${extendItem}. Spent ${goldValue} gold`
-      );
+      await page.logger(LoggerLevels.GOLD_SPENT, `Extending gold offer for ${extendItem}. Spent ${goldValue} gold`);
       console.log(`Extending gold offer for ${extendItem} `);
       await offer.click();
       await delay(200, 500);
@@ -53,9 +51,7 @@ export const extendGoldPlanAndResources = async (page: Page) => {
 };
 
 const checkFirstTimeGoldActivation = async (page: Page) => {
-  const productionBoostButton = await page.$(
-    "button.gold.productionBoostButton"
-  );
+  const productionBoostButton = await page.$("button.gold.productionBoostButton");
   if (!productionBoostButton) {
     await page.logger(LoggerLevels.INFO, "No production boost button found");
     console.log("No production boost button found");
@@ -64,7 +60,12 @@ const checkFirstTimeGoldActivation = async (page: Page) => {
   await productionBoostButton?.click();
   await delay(200, 500);
 
+  const { gold } = await getGoldAndSilver(page);
   for (let offerNumber of [0, 1, 2, 3]) {
+    if (gold < 5) {
+      await page.logger(LoggerLevels.INFO, "Not enough gold to activate production boost offers. Need 5 gold");
+      break;
+    }
     const productionBoostOffers = await page.$$(".packageFeatures");
     if (!productionBoostOffers[offerNumber]) {
       await page.logger(LoggerLevels.INFO, "No production boost offers found");
@@ -73,10 +74,7 @@ const checkFirstTimeGoldActivation = async (page: Page) => {
     }
     const offerButton = await productionBoostOffers[offerNumber].$("button");
     if (!offerButton) {
-      await page.logger(
-        LoggerLevels.INFO,
-        "No production boost offer button found"
-      );
+      await page.logger(LoggerLevels.INFO, "No production boost offer button found");
       console.log("No production boost offer button found");
       continue;
     }
@@ -97,18 +95,13 @@ const checkFirstTimeGoldActivation = async (page: Page) => {
         return el.querySelector(".featureTitle")?.textContent;
       });
       console.log(`Activated production boost offer: ${title}`);
-      await page.logger(
-        LoggerLevels.GOLD_SPENT,
-        `Activated production boost offer: ${title}`
-      );
+      await page.logger(LoggerLevels.GOLD_SPENT, `Activated production boost offer: ${title}`);
       await offerButton.click();
       await delay(800, 1100);
     }
   }
 
-  const closeProductionBoostButton = await page.$(
-    ".premiumFeaturePackage div.dialogCancelButton"
-  );
+  const closeProductionBoostButton = await page.$(".premiumFeaturePackage div.dialogCancelButton");
   console.log("Closing production boost modal", closeProductionBoostButton);
   await closeProductionBoostButton?.click();
   await page.logger(LoggerLevels.INFO, "Production boost check completed");
@@ -116,17 +109,12 @@ const checkFirstTimeGoldActivation = async (page: Page) => {
 };
 
 const getGoldAndSilver = async (page: Page) => {
-  const rawValues = await page.$$eval("#header .currency .value", (els) =>
-    els.map((el) => el.textContent)
-  );
+  const rawValues = await page.$$eval("#header .currency .value", (els) => els.map((el) => el.textContent));
   const rawGoldValue = rawValues[0];
   const rawSilverValue = rawValues[1];
 
   if (!rawGoldValue || !rawSilverValue) {
-    await page.logger(
-      LoggerLevels.ERROR,
-      "Could not get gold and silver values!"
-    );
+    await page.logger(LoggerLevels.ERROR, "Could not get gold and silver values!");
     console.error("Could not get gold and silver values");
     return { gold: 0, silver: 0 };
   }

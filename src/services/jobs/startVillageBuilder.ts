@@ -10,10 +10,7 @@ export const startVillageBuilder = async (botId: string, page: Page) => {
   try {
     await fetchBotPlan(botId);
   } catch (e) {
-    await serverLogger(
-      LoggerLevels.ERROR,
-      `Error fetching bot type and plan: ${e}`
-    );
+    await serverLogger(LoggerLevels.ERROR, `Error fetching bot type and plan: ${e}`);
     console.error(e);
     return;
   }
@@ -21,10 +18,7 @@ export const startVillageBuilder = async (botId: string, page: Page) => {
   await basicGameRoutines(page);
 
   // Start building by plan
-  const hasFinished = await startBuildingByPlan(
-    page,
-    PlanSingelton.getInstance().getPlan()
-  );
+  const hasFinished = await startBuildingByPlan(page, PlanSingelton.getInstance().getPlan());
 
   // If there are no constructions, stop the bot
   if (hasFinished) {
