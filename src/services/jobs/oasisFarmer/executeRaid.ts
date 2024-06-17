@@ -213,7 +213,7 @@ export const executeOasisRaid = async (page: Page, raidConfiguration: OasisRaidC
       message: "OASIS - confirm button not found",
     };
   await confirmButton.click();
-
+  await delay(500, 700);
   return {
     status: LoggerLevels.SUCCESS,
     terminate: false,
