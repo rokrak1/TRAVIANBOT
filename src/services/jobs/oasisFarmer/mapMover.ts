@@ -357,6 +357,7 @@ const compareValuesAndClickOasis = async (page: Page, clickableSquares: Clickabl
         await getCloseButton.click();
         if (raidStatus.terminate) return raidStatus;
 
+        await page.logger(raidStatus.status, raidStatus.message);
         await delay(1000, 1100);
       }
     }

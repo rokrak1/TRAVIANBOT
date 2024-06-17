@@ -176,9 +176,9 @@ export const executeOasisRaid = async (page: Page, raidConfiguration: OasisRaidC
 
   if (parsedCount < requiredTroops)
     return {
-      status: LoggerLevels.ERROR,
+      status: LoggerLevels.INFO,
       terminate: false,
-      message: "OASIS - not enough troops to execute raid",
+      message: `OASIS - not enough troops (${parsedCount} of ${requiredTroops}) to execute raid at ${x}|${y}, skipping...`,
     };
 
   const inputField = await validTroopField.$("input");
@@ -214,11 +214,10 @@ export const executeOasisRaid = async (page: Page, raidConfiguration: OasisRaidC
     };
   await confirmButton.click();
 
-  await page.logger(LoggerLevels.SUCCESS, `Started raiding oasis at ${x}|${y} with ${requiredTroops} troops`);
   return {
     status: LoggerLevels.SUCCESS,
     terminate: false,
-    message: "OASIS - raid executed",
+    message: `Started raiding oasis at ${x}|${y} with ${requiredTroops} troops`,
   };
 };
 
