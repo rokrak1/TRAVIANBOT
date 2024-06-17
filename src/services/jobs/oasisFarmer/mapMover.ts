@@ -247,25 +247,32 @@ const findVisibleValues = async (page: Page, mapInfo: MapInfo): Promise<Clickabl
   };
 
   const adjustClickPosition = (x: number, y: number, bbox: BBox) => {
-    const offset = 5;
+    const offset = 5; // Adjust this value as needed
 
     unavailablePositions.forEach((unavailable) => {
       if (!unavailable) return;
 
+      // Adjust for unavailable positions
       if (x > unavailable.x && x < unavailable.x + unavailable.width) {
-        x = x < unavailable.x + unavailable.width / 2 ? bbox.x + offset : bbox.x + bbox.width - offset;
+        if (x < unavailable.x + unavailable.width / 2) {
+          x = Math.max(bbox.x + offset, unavailable.x - offset);
+        } else {
+          x = Math.min(bbox.x + bbox.width - offset, unavailable.x + unavailable.width + offset);
+        }
       }
 
       if (y > unavailable.y && y < unavailable.y + unavailable.height) {
-        y = y < unavailable.y + unavailable.height / 2 ? bbox.y + offset : bbox.y + bbox.height - offset;
+        if (y < unavailable.y + unavailable.height / 2) {
+          y = Math.max(bbox.y + offset, unavailable.y - offset);
+        } else {
+          y = Math.min(bbox.y + bbox.height - offset, unavailable.y + unavailable.height + offset);
+        }
       }
     });
 
     // Adjust based on map bounding box
-    if (x < mapBoundingBox.x) x = mapBoundingBox.x + offset;
-    if (x > mapBoundingBox.x + mapBoundingBox.width) x = mapBoundingBox.x + mapBoundingBox.width - offset;
-    if (y < mapBoundingBox.y) y = mapBoundingBox.y + offset;
-    if (y > mapBoundingBox.y + mapBoundingBox.height) y = mapBoundingBox.y + mapBoundingBox.height - offset;
+    x = Math.max(mapBoundingBox.x + offset, Math.min(x, mapBoundingBox.x + mapBoundingBox.width - offset));
+    y = Math.max(mapBoundingBox.y + offset, Math.min(y, mapBoundingBox.y + mapBoundingBox.height - offset));
 
     return { x, y };
   };
@@ -304,17 +311,16 @@ const compareValuesAndClickOasis = async (page: Page, clickableSquares: Clickabl
 
         const raidStatus = await createNewPageAndExecuteRaid(page, oasis);
 
-        if (raidStatus.terminate) return raidStatus;
-
-        if (raidStatus.status === LoggerLevels.ERROR) continue;
-
         const getCloseButton = await page.$(".dialogCancelButton");
+
         if (!getCloseButton) {
           await page.logger(LoggerLevels.ERROR, "No close button found");
           console.log("No close button found");
           return;
         }
+
         await getCloseButton.click();
+        if (raidStatus.terminate) return raidStatus;
 
         await delay(1000, 1100);
       }

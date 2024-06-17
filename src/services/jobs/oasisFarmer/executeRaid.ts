@@ -22,6 +22,7 @@ export interface RaidStatus {
 }
 
 const getRaidLink = async (page: Page) => {
+  await page.waitForSelector(".detailImage .options", { timeout: 5000 });
   const optionsContainer = await page.$(".detailImage .options");
   if (!optionsContainer) {
     await page.logger(LoggerLevels.ERROR, "No options container found");
