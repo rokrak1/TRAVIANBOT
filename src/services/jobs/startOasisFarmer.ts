@@ -5,7 +5,7 @@ import { delay } from "../../utils";
 import { createExplorationGrid, goToMapFetchBoundingBox } from "./oasisFarmer/oasisUtils";
 import { startMovingMap } from "./oasisFarmer/mapMover";
 
-export const startOasisFarmer = async (page: Page, additionalConfiguration: OasisAdditionalConfiguration) => {
+export const startOasisFarmer = async (page: Page, config: OasisAdditionalConfiguration) => {
   const mapInfo = await goToMapFetchBoundingBox(page);
   if (!mapInfo) return;
 
@@ -19,17 +19,17 @@ export const startOasisFarmer = async (page: Page, additionalConfiguration: Oasi
   await delay(800, 1000);
 
   // Get attacking troop
-  const { tribe, attackingTroops } = additionalConfiguration;
+  const { tribe, attackingTroops } = config;
   troopsConfig.selectedTribe = tribe;
   // For now lets just take single troop
   const attackingTroop = getAttackingTroop(tribe, attackingTroops[0]);
   troopsConfig.selectedTroops.push(attackingTroop);
 
   // Create exploration grid
-  const maxTop = 0,
-    maxLeft = 3,
-    maxRight = 2,
-    maxBottom = 2;
+  const maxTop = config.maxTop || 2,
+    maxLeft = config.maxLeft || 2,
+    maxRight = config.maxRight || 2,
+    maxBottom = config.maxBottom || 2;
 
   const quadrantArray = createExplorationGrid(maxTop, maxBottom, maxLeft, maxRight);
   // Start moving the map

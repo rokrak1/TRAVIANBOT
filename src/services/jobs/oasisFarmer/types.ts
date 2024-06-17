@@ -61,6 +61,8 @@ export type Unit = RomanUnits | TeutonUnits | GaulUnits;
 export interface OasisAdditionalConfiguration {
   tribe: Tribes;
   attackingTroops: { name: Unit; level: number }[];
-  startX: number;
-  startY: number;
+  maxTop: number;
+  maxLeft: number;
+  maxRight: number;
+  maxBottom: number;
 }
