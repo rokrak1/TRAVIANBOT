@@ -26,10 +26,10 @@ export const startOasisFarmer = async (page: Page, additionalConfiguration: Oasi
   troopsConfig.selectedTroops.push(attackingTroop);
 
   // Create exploration grid
-  const maxTop = 3,
+  const maxTop = 0,
     maxLeft = 3,
-    maxRight = 3,
-    maxBottom = 1;
+    maxRight = 2,
+    maxBottom = 2;
 
   const quadrantArray = createExplorationGrid(maxTop, maxBottom, maxLeft, maxRight);
   // Start moving the map

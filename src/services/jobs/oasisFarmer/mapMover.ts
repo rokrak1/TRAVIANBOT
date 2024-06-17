@@ -200,9 +200,13 @@ const getUnavailablePositions = async (page: Page) => {
   if (!minimapContainer) return null;
 
   const outlineBbox = await outline.boundingBox();
+  if (!outlineBbox) return null;
   const mapCoordEnterBbox = await mapCoordEnter.boundingBox();
+  if (!mapCoordEnterBbox) return null;
   const toolbarBbox = await toolbar.boundingBox();
+  if (!toolbarBbox) return null;
   const minimapContainerBbox = await minimapContainer.boundingBox();
+  if (!minimapContainerBbox) return null;
   return [outlineBbox, mapCoordEnterBbox, toolbarBbox, minimapContainerBbox];
 };
 
@@ -220,25 +224,6 @@ const findVisibleValues = async (page: Page, mapInfo: MapInfo): Promise<Clickabl
 
   if (!unavailablePositions || !xValues || !yValues) return [];
 
-  const isPositionUnavailable = (x: number, y: number, bbox: BBox) => {
-    return unavailablePositions.some((unavailable) => {
-      if (!unavailable) return false;
-
-      const intersectX = Math.max(
-        0,
-        Math.min(bbox.x + bbox.width, unavailable.x + unavailable.width) - Math.max(bbox.x, unavailable.x)
-      );
-      const intersectY = Math.max(
-        0,
-        Math.min(bbox.y + bbox.height, unavailable.y + unavailable.height) - Math.max(bbox.y, unavailable.y)
-      );
-      const intersectionArea = intersectX * intersectY;
-
-      const bboxArea = bbox.width * bbox.height;
-      return intersectionArea > bboxArea / 2;
-    });
-  };
-
   const mapBoundingBox = {
     x: mapInfo.mapX,
     y: mapInfo.mapY,
@@ -246,35 +231,91 @@ const findVisibleValues = async (page: Page, mapInfo: MapInfo): Promise<Clickabl
     height: mapInfo.mapHeight,
   };
 
-  const adjustClickPosition = (x: number, y: number, bbox: BBox) => {
-    const offset = 5; // Adjust this value as needed
+  const adjustPositionIfAvailableToClick = (bbox: BBox) => {
+    const offset = 5;
+    const isXInsideMap =
+      bbox.x + bbox.width - offset > mapBoundingBox.x && bbox.x < mapBoundingBox.x + mapBoundingBox.width + offset;
+    const isYInsideMap =
+      bbox.y + bbox.height - offset > mapBoundingBox.y && bbox.y < mapBoundingBox.y + mapBoundingBox.height + offset;
 
-    unavailablePositions.forEach((unavailable) => {
-      if (!unavailable) return;
+    if (!isXInsideMap || !isYInsideMap) return null;
 
-      // Adjust for unavailable positions
-      if (x > unavailable.x && x < unavailable.x + unavailable.width) {
-        if (x < unavailable.x + unavailable.width / 2) {
-          x = Math.max(bbox.x + offset, unavailable.x - offset);
-        } else {
-          x = Math.min(bbox.x + bbox.width - offset, unavailable.x + unavailable.width + offset);
-        }
-      }
+    let newX = bbox.x;
+    let newY = bbox.y;
+    let newWidth = bbox.width;
+    let newHeight = bbox.height;
 
-      if (y > unavailable.y && y < unavailable.y + unavailable.height) {
-        if (y < unavailable.y + unavailable.height / 2) {
-          y = Math.max(bbox.y + offset, unavailable.y - offset);
-        } else {
-          y = Math.min(bbox.y + bbox.height - offset, unavailable.y + unavailable.height + offset);
-        }
-      }
+    // Adjust for left overflow
+    if (bbox.x < mapBoundingBox.x) {
+      newX = mapBoundingBox.x;
+      newWidth = bbox.width - (mapBoundingBox.x - bbox.x);
+    }
+
+    // Adjust for right overflow
+    if (bbox.x + bbox.width > mapBoundingBox.x + mapBoundingBox.width) {
+      newWidth = mapBoundingBox.x + mapBoundingBox.width - bbox.x;
+    }
+
+    // Adjust for top overflow
+    if (bbox.y < mapBoundingBox.y) {
+      newY = mapBoundingBox.y + offset;
+      newHeight = bbox.height - (mapBoundingBox.y - bbox.y);
+    }
+
+    // Adjust for bottom overflow
+    if (bbox.y + bbox.height > mapBoundingBox.y + mapBoundingBox.height) {
+      newHeight = mapBoundingBox.y + mapBoundingBox.height - bbox.y - offset;
+    }
+
+    // Check if the width or height is smaller than the offset, return null
+    if (newWidth < offset || newHeight < offset) {
+      return null;
+    }
+
+    // Check for overlap with unavailable positions
+    const overlappingItemBBox = unavailablePositions.find((unavailable) => {
+      return (
+        newX < unavailable.x + unavailable.width &&
+        newX + newWidth > unavailable.x &&
+        newY < unavailable.y + unavailable.height &&
+        newY + newHeight > unavailable.y
+      );
     });
 
-    // Adjust based on map bounding box
-    x = Math.max(mapBoundingBox.x + offset, Math.min(x, mapBoundingBox.x + mapBoundingBox.width - offset));
-    y = Math.max(mapBoundingBox.y + offset, Math.min(y, mapBoundingBox.y + mapBoundingBox.height - offset));
+    // There is an overlap, adjust position if possible
+    if (overlappingItemBBox) {
+      // Adjust for left overlap
+      if (newX < overlappingItemBBox.x + overlappingItemBBox.width) {
+        newWidth = newWidth - (overlappingItemBBox.x + overlappingItemBBox.width - newX);
+        if (newWidth < offset) return null;
+        newX = overlappingItemBBox.x + overlappingItemBBox.width;
+      }
 
-    return { x, y };
+      // Adjust for right overlap
+      if (newX + newWidth > overlappingItemBBox.x) {
+        newWidth = overlappingItemBBox.x - newX;
+        if (newWidth < offset) return null;
+      }
+
+      // Adjust for top overlap
+      if (newY < overlappingItemBBox.y + overlappingItemBBox.height) {
+        newHeight = newHeight - (overlappingItemBBox.y + overlappingItemBBox.height - newY);
+        if (newHeight < offset) return null;
+        newY = overlappingItemBBox.y + overlappingItemBBox.height;
+      }
+
+      // Adjust for bottom overlap
+      if (newY + newHeight > overlappingItemBBox.y) {
+        newHeight = overlappingItemBBox.y - newY;
+        if (newHeight < offset) return null;
+      }
+    }
+
+    return {
+      x: newX,
+      y: newY,
+      clickPosition: { x: Math.round(newX + newWidth / 2), y: Math.round(newY + newHeight / 2) },
+    };
   };
 
   const clickableSquares = [];
@@ -287,16 +328,10 @@ const findVisibleValues = async (page: Page, mapInfo: MapInfo): Promise<Clickabl
         width: xValue.bbox.width,
         height: yValue.bbox.height,
       };
-      if (!isPositionUnavailable(xValue.value, yValue.value, bbox)) {
-        let clickPosition = {
-          x: bbox.x + bbox.width / 2,
-          y: bbox.y + bbox.height / 2,
-        };
-
-        clickPosition = adjustClickPosition(clickPosition.x, clickPosition.y, bbox);
-
-        clickableSquares.push({ x: xValue.value, y: yValue.value, clickPosition });
-      }
+      const newPosition = adjustPositionIfAvailableToClick(bbox);
+      if (!newPosition) continue;
+      const clickPosition = newPosition.clickPosition;
+      clickableSquares.push({ x: xValue.value, y: yValue.value, clickPosition });
     }
   }
   return clickableSquares;

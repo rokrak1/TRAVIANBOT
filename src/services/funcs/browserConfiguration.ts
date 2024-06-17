@@ -1,4 +1,4 @@
-import puppeteer, { Browser, Page } from "puppeteer";
+import puppeteer, { Browser } from "puppeteer";
 import { createLogger } from "../../config/logger";
 import { bypassRecaptcha } from "./bypassRecaptcha";
 
@@ -28,7 +28,7 @@ export class BrowserInstance {
 
   public async init(botId: string, proxyUsername?: string, proxyPassword?: string) {
     if (this.browser) {
-      return; // Already initialized
+      return;
     }
 
     this.browser = await puppeteer.launch({
