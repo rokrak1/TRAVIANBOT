@@ -1,4 +1,4 @@
-import { CronJob } from "cron";
+import { CronJob, CronTime } from "cron";
 
 enum CronIntervals {
   ONE_MINUTE = "*/1 * * * *",
@@ -58,6 +58,9 @@ export class CronManager {
     if (this._jobs[botId]) {
       if (this._jobs[botId].cron.running) {
         throw new Error(`Cron job with id ${botId} is already running.`);
+      }
+      if (this._jobs[botId].interval !== periodText) {
+        this._jobs[botId].cron.setTime(new CronTime(CronIntervals[periodText]));
       }
       this._jobs[botId].cron.start();
       return;
