@@ -45,7 +45,6 @@ const getRaidLink = async (page: Page) => {
       break;
     }
   }
-
   const raidButton = options[optionIndexWithBuild];
   if (!raidButton) {
     await page.logger(LoggerLevels.ERROR, "No raid button found");
@@ -213,7 +212,7 @@ export const executeOasisRaid = async (page: Page, raidConfiguration: OasisRaidC
       message: "OASIS - confirm button not found",
     };
   await confirmButton.click();
-  await delay(500, 700);
+  await delay(600, 700);
   return {
     status: LoggerLevels.SUCCESS,
     terminate: false,

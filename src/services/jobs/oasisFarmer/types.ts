@@ -67,4 +67,5 @@ export interface OasisAdditionalConfiguration {
   maxBottom: number;
   startX: number;
   startY: number;
+  selectedVillage: string;
 }

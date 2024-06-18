@@ -33,7 +33,7 @@ export class BrowserInstance {
 
     this.browser = await puppeteer.launch({
       ...(process.env.DEV_MODE && { headless: false }),
-      userDataDir: `./user_data`,
+      userDataDir: `./user_data/${botId}`,
       args: [`--window-size=1280,1024`, "--no-sandbox", "--disabled-setupid-sandbox", ...serverArgs],
       defaultViewport: {
         width: 1280,

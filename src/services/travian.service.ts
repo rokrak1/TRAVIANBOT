@@ -8,6 +8,7 @@ import { BotType } from "./utils/database";
 import { removeUserData } from "./utils";
 import { startVillageBuilder, startFarmer, startOasisFarmer } from "./jobs";
 import { OasisAdditionalConfiguration } from "./jobs/oasisFarmer/types";
+import { selectVillage } from "./funcs/selectVillage";
 
 export const travianStart = async (
   botId: string,
@@ -28,6 +29,15 @@ export const travianStart = async (
     const page = await browser.createPage();
     // First steps that should be done on every bot
     await firstSteps(page, configurations);
+
+    // Select the village
+    if (additionalConfiguration?.selectedVillage) {
+      const villageExists = await selectVillage(page, additionalConfiguration.selectedVillage);
+      if (!villageExists) {
+        throw new Error(`Village ${additionalConfiguration.selectedVillage} not found for botId: ${botId}`);
+      }
+    }
+
     // Proceed with bot type
     if (type === BotType.VILLAGE_BUILDER) {
       await startVillageBuilder(botId, page);
