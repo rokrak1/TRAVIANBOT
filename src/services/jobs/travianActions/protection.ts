@@ -12,7 +12,15 @@ export const extendProtection = async (page: Page) => {
     });
     if (!itemText) continue;
     if (itemText.includes("Extend")) {
-      console.log("itemText", itemText);
+      const isGoldOffer = await item.evaluate((el) => {
+        return el.querySelector("button")?.className;
+      });
+
+      if (isGoldOffer?.includes("gold")) {
+        await page.logger(LoggerLevels.INFO, "Gold offer found, skipping");
+        continue;
+      }
+
       const extendButton = await item.$("button");
       if (!extendButton) {
         await page.logger(LoggerLevels.ERROR, "No extend button found");

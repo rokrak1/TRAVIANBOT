@@ -27,7 +27,6 @@ export function calculateRaidLosses(attackingUnits: UnitInfo[], defenderUnits: U
 
   if (totalOffense > totalDefense) {
     let x = Math.pow(totalDefense / totalOffense, 1.5) * 100;
-    //  console.log(x);
     casualtyPercent = (100 * x) / (100 + x);
   } else {
     console.log("Defense is too strong...");

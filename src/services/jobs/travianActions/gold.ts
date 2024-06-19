@@ -10,7 +10,7 @@ export const extendGoldPlanAndResources = async (page: Page) => {
     await clickNavigationSlot(page, NavigationTypes.RESOURCES);
   }
 
-  await checkFirstTimeGoldActivation(page);
+  // await checkFirstTimeGoldActivation(page);
 
   const goldPlanExtendedOffers = await page.$$("#sidebarBoxInfobox li button.gold");
 
@@ -51,6 +51,12 @@ export const extendGoldPlanAndResources = async (page: Page) => {
 };
 
 const checkFirstTimeGoldActivation = async (page: Page) => {
+  const { gold } = await getGoldAndSilver(page);
+  if (gold < 5) {
+    await page.logger(LoggerLevels.INFO, "Not enough gold to activate production boost offers. Need 5 gold");
+    return;
+  }
+
   const productionBoostButton = await page.$("button.gold.productionBoostButton");
   if (!productionBoostButton) {
     await page.logger(LoggerLevels.INFO, "No production boost button found");
@@ -60,12 +66,7 @@ const checkFirstTimeGoldActivation = async (page: Page) => {
   await productionBoostButton?.click();
   await delay(200, 500);
 
-  const { gold } = await getGoldAndSilver(page);
   for (let offerNumber of [0, 1, 2, 3]) {
-    if (gold < 5) {
-      await page.logger(LoggerLevels.INFO, "Not enough gold to activate production boost offers. Need 5 gold");
-      break;
-    }
     const productionBoostOffers = await page.$$(".packageFeatures");
     if (!productionBoostOffers[offerNumber]) {
       await page.logger(LoggerLevels.INFO, "No production boost offers found");
