@@ -50,7 +50,7 @@ export const fetchOasis = async (
   );
 
   const validAnimals = ["Rat", "Spider", "Bat", "Wild Boar"];
-  const mustIncludeAnimals = ["Rat", "Wild Boar"];
+  const mustIncludeAnimals = ["Rat"];
   // Get only "rich" oases (clay)
   const richOasis = filterOutSameOasis.filter((oasis) => {
     const animals = Object.keys(oasis.units);

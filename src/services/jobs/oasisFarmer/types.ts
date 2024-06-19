@@ -65,6 +65,7 @@ export interface OasisAdditionalConfiguration {
   maxLeft: number;
   maxRight: number;
   maxBottom: number;
+  maxTroopsLoss: number;
   startX: number;
   startY: number;
   selectedVillage: string;
