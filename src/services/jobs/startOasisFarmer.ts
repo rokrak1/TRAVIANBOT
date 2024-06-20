@@ -1,11 +1,16 @@
 import { Page } from "puppeteer";
 import { OasisAdditionalConfiguration } from "./oasisFarmer/types";
-import { getAttackingTroop, troopsConfig } from "./oasisFarmer/allTroops";
+import { allAttackingOasis, getAttackingTroops, troopsConfig } from "./oasisFarmer/allTroops";
 import { delay } from "../../utils";
 import { createExplorationGrid, goToMapFetchBoundingBox } from "./oasisFarmer/oasisUtils";
 import { startMovingMap } from "./oasisFarmer/mapMover";
+import { getAllAttackingOasis } from "./oasisFarmer/getAttackingOasis";
 
-export const startOasisFarmer = async (page: Page, config: OasisAdditionalConfiguration) => {
+export const startOasisFarmer = async (page: Page, travianDomain: string, config: OasisAdditionalConfiguration) => {
+  // Get already attacking oasis
+  const alreadyAttackingOasis = await getAllAttackingOasis(page, travianDomain);
+  allAttackingOasis.push(...alreadyAttackingOasis);
+
   const mapInfo = await goToMapFetchBoundingBox(page);
   if (!mapInfo) return;
 
@@ -22,8 +27,8 @@ export const startOasisFarmer = async (page: Page, config: OasisAdditionalConfig
   const { tribe, attackingTroops } = config;
   troopsConfig.selectedTribe = tribe;
   // For now lets just take single troop
-  const attackingTroop = getAttackingTroop(tribe, attackingTroops[0]);
-  troopsConfig.selectedTroops.push(attackingTroop);
+  const attackingTroop = getAttackingTroops(tribe, attackingTroops);
+  troopsConfig.selectedTroops.push(...attackingTroop);
 
   // Create exploration grid
   const maxTop = config.maxTop || 2,

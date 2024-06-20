@@ -1,9 +1,10 @@
-import { OasisPosition } from "./dataFetching";
+import { OasisPosition, OasisType } from "./fetchOasis";
 import { UnitInfo } from "./lossCalculator";
 import { Tribes, Unit } from "./types";
 import troops from "./troops.json";
 
 export const oases: OasisPosition[] = [];
+export const allAttackingOasis: { x: number; y: number }[] = [];
 export const troopsConfig = {
   selectedTroops: [] as UnitInfo[],
   selectedTribe: Tribes.GAUL,
@@ -54,7 +55,7 @@ export const animals = {
   Snake: "u33",
   Bat: "u34",
   "Wild Boar": "u35",
-  Wolve: "u36",
+  Wolf: "u36",
   Bear: "u37",
   Crocodile: "u38",
   Tiger: "u39",
@@ -68,7 +69,10 @@ export const allTroops = {
   Animals: animals,
 };
 
-export const getAttackingTroop = (tribe: string, attackingTroop: { name: Unit; level: number }): UnitInfo => {
+export const getAttackingTroop = (
+  tribe: string,
+  attackingTroop: { name: Unit; level: number; type: OasisType }
+): UnitInfo => {
   const selectedUnits = troops.find((t) => t.tribe === tribe)?.units as unknown as UnitInfo[];
   if (!selectedUnits) {
     throw new Error("Tribe not found in troops.json");
@@ -82,10 +86,13 @@ export const getAttackingTroop = (tribe: string, attackingTroop: { name: Unit; l
     throw new Error("Troop not found in troops.json");
   }
 
-  return { ...selectedTroop, level: attackingTroop.level };
+  return { ...selectedTroop, level: attackingTroop.level, oasisType: attackingTroop.type };
 };
 
-export const getAttackingTroops = (tribe: string, attackingTroops: { name: Unit; level: number }[]): UnitInfo[] => {
+export const getAttackingTroops = (
+  tribe: string,
+  attackingTroops: { name: Unit; level: number; type: OasisType }[]
+): UnitInfo[] => {
   return attackingTroops.map((attackingTroop) => getAttackingTroop(tribe, attackingTroop));
 };
 

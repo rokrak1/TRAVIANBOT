@@ -1,3 +1,5 @@
+import { OasisType } from "./fetchOasis";
+
 export enum Tribes {
   ROMAN = "Romans",
   TEUTON = "Teutons",
@@ -60,7 +62,7 @@ export type Unit = RomanUnits | TeutonUnits | GaulUnits;
 
 export interface OasisAdditionalConfiguration {
   tribe: Tribes;
-  attackingTroops: { name: Unit; level: number }[];
+  attackingTroops: { name: Unit; level: number; type: OasisType }[];
   maxTop: number;
   maxLeft: number;
   maxRight: number;

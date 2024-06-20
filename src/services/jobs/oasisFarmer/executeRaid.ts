@@ -1,11 +1,9 @@
 import { ElementHandle, Page } from "puppeteer";
 import { delay, parseValue } from "../../../utils";
 import { allTroops, getNatureTroops, troopsConfig } from "./allTroops";
-import { clickNavigationSlot } from "../travianActions/clicker";
-import { NavigationTypes } from "../villageBuilder/navigationSlots";
 import { Tribes } from "./types";
 import { UnitInfo, calculateRequiredTroopsForMinimalLossAndTroopsUsed } from "./lossCalculator";
-import { OasisPosition } from "./dataFetching";
+import { OasisPosition, OasisType } from "./fetchOasis";
 import { LoggerLevels } from "../../../config/logger";
 import { BrowserInstance } from "../../funcs/browserConfiguration";
 
@@ -18,6 +16,7 @@ export interface OasisRaidConfiguration extends OasisPosition {
 export interface RaidStatus {
   status: LoggerLevels;
   terminate: boolean;
+  terminateOasis?: OasisType;
   message: string;
 }
 
@@ -59,16 +58,24 @@ export const createNewPageAndExecuteRaid = async (page: Page, oasis: OasisPositi
   // Get Url for raid
   const raidLink = await getRaidLink(page);
   if (!raidLink) {
+    console.log("OASIS - raid link not found");
     return {
       status: LoggerLevels.ERROR,
       terminate: false,
       message: "OASIS - raid link not found",
     };
   }
-  const attackingTroop = troopsConfig.selectedTroops[0];
+
+  const attackingTroop = troopsConfig.selectedTroops.find((troop) => troop.oasisType === oasis.type);
+
+  if (!attackingTroop) {
+    return { status: LoggerLevels.ERROR, terminate: false, message: "OASIS - attacking troop not found" };
+  }
+
   const tribe = troopsConfig.selectedTribe;
   const natureTroops = getNatureTroops(oasis);
   const requiredTroops = calculateRequiredTroopsForMinimalLossAndTroopsUsed(attackingTroop, natureTroops);
+
   if (!requiredTroops) {
     return {
       status: LoggerLevels.ERROR,
@@ -77,7 +84,7 @@ export const createNewPageAndExecuteRaid = async (page: Page, oasis: OasisPositi
     };
   }
 
-  const maxTroops = 1200;
+  const maxTroops = attackingTroop.oasisType === OasisType.Rich ? 1200 : 10000;
   if (requiredTroops > maxTroops)
     return { status: LoggerLevels.ERROR, terminate: false, message: `OASIS - max troops value exceeded ${maxTroops}` };
 
@@ -160,16 +167,18 @@ export const executeOasisRaid = async (page: Page, raidConfiguration: OasisRaidC
     return {
       status: LoggerLevels.ERROR,
       terminate: true,
+      terminateOasis: attackingTroop.oasisType,
       message: "OASIS - troop count not found, terminating loop...",
     };
 
   const parsedCount = parseValue(troopCount);
-  const minTroopCount = attackingTroop.type === "infantry" ? 200 : 30;
+  const minTroopCount = attackingTroop.type === "infantry" ? 500 : 50;
 
   if (parsedCount < minTroopCount)
     return {
       status: LoggerLevels.ERROR,
       terminate: true,
+      terminateOasis: attackingTroop.oasisType,
       message: "OASIS - not enough troops to execute raid, terminating loop...",
     };
 

@@ -1,9 +1,10 @@
 import { Page } from "puppeteer";
 import { delay } from "../../../utils";
 import { humanLikeMouseMove } from "./humanLikeMove";
-import { oases } from "./allTroops";
+import { allAttackingOasis, oases, troopsConfig } from "./allTroops";
 import { LoggerLevels } from "../../../config/logger";
 import { createNewPageAndExecuteRaid } from "./executeRaid";
+import { OasisPosition, OasisType } from "./fetchOasis";
 
 enum Moves {
   UP = "up",
@@ -337,8 +338,36 @@ const findVisibleValues = async (page: Page, mapInfo: MapInfo): Promise<Clickabl
   return clickableSquares;
 };
 
-const compareValuesAndClickOasis = async (page: Page, clickableSquares: ClickableSquares[]) => {
+const compareValuesAndClickOasis = async (
+  page: Page,
+  clickableSquares: ClickableSquares[],
+  terminatedOasis: OasisType[]
+) => {
+  const attackingTroopsTypes = troopsConfig.selectedTroops.map((t) => t.oasisType);
   for (const oasis of oases) {
+    // If both types are terminated
+    if (terminatedOasis.length === 2) {
+      return {
+        status: LoggerLevels.INFO,
+        terminate: true,
+        message: "Both oasis types are terminated",
+      };
+    }
+
+    // Check if oasis is terminated
+    const isTerminated = terminatedOasis.includes(oasis.type!);
+    if (isTerminated) continue;
+
+    // Check if oasis type is valid to attack
+    const haveAtLeastOneValidType = attackingTroopsTypes.includes(oasis.type);
+    if (!haveAtLeastOneValidType) continue;
+
+    // Check if oasis was already sent
+    const oasisWasAlreadySent = allAttackingOasis.some(
+      (attackingOasis) => attackingOasis.x === oasis.position.x && attackingOasis.y === oasis.position.y
+    );
+    if (oasisWasAlreadySent) continue;
+
     for (const clickableSquare of clickableSquares) {
       if (oasis.position.x === clickableSquare.x && oasis.position.y === clickableSquare.y && !oasis.wasSend) {
         await page.mouse.click(clickableSquare.clickPosition.x, clickableSquare.clickPosition.y);
@@ -354,10 +383,13 @@ const compareValuesAndClickOasis = async (page: Page, clickableSquares: Clickabl
           return;
         }
 
-        await getCloseButton.click();
-        if (raidStatus.terminate) return raidStatus;
+        if (raidStatus.terminateOasis && !terminatedOasis.includes(raidStatus.terminateOasis)) {
+          console.log("pushing");
+          terminatedOasis.push(raidStatus.terminateOasis);
+        }
 
         await page.logger(raidStatus.status, raidStatus.message);
+        await getCloseButton.click();
         await delay(1000, 1100);
       }
     }
@@ -371,6 +403,7 @@ export const startMovingMap = async (
   currentX: number,
   currentY: number
 ) => {
+  const terminatedOasis: OasisType[] = [];
   while (grid.flat().includes("?")) {
     const { closest, directions } = findClosestUnvisitedPositionWithDirections(currentX, currentY, grid);
     if (!closest) {
@@ -398,7 +431,7 @@ export const startMovingMap = async (
       grid[currentY][currentX] = "x";
     }
     const clickableSquares = await findVisibleValues(page, mapInfo);
-    const raidStatus = await compareValuesAndClickOasis(page, clickableSquares);
+    const raidStatus = await compareValuesAndClickOasis(page, clickableSquares, terminatedOasis);
     if (raidStatus?.terminate) return raidStatus;
   }
 

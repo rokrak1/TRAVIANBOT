@@ -5,7 +5,7 @@ import { delay } from "../../../utils";
 import { fetchOasisFromPositionNew } from "./dataFetching";
 import { oases } from "./allTroops";
 import { LoggerLevels } from "../../../config/logger";
-import { getOnlyNewOasis, getRichOasis } from "./fetchOasis";
+import { getOnlyNewOasis, getRichAndWoodOasis } from "./fetchOasis";
 
 const positionsInterceptor = async (page: Page) => {
   // Function to handle request events
@@ -17,9 +17,8 @@ const positionsInterceptor = async (page: Page) => {
       const newOases = fetchOasisFromPositionNew(data.tiles);
       if (newOases) {
         const onlyNewOasis = getOnlyNewOasis(oases, newOases);
-        const richOases = getRichOasis(onlyNewOasis);
-        oases.push(...richOases);
-        console.log(oases.length);
+        const oasis = getRichAndWoodOasis(onlyNewOasis);
+        oases.push(...oasis);
       }
     }
   };

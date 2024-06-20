@@ -6,19 +6,11 @@ import { userAgent } from "../../funcs/browserConfiguration";
 import * as cheerio from "cheerio";
 import { OasisAdditionalConfiguration } from "./types";
 import { animals } from "./allTroops";
+import { OasisPosition } from "./fetchOasis";
 
 export interface Tile {
   position: { x: number; y: number };
   text: string;
-}
-
-export interface OasisPosition {
-  units: {
-    [key: string]: string;
-  };
-  position: { x: number; y: number };
-  distance?: number;
-  wasSend?: boolean;
 }
 
 export const fetchOasisFromPositionNew = (tiles: Tile[]) => {

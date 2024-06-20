@@ -1,12 +1,6 @@
 import { Page } from "puppeteer";
 import { OasisAdditionalConfiguration } from "./types";
-import {
-  OasisPosition,
-  createTileCatcher,
-  fetchOasisFromPosition,
-  fetchXHRCookies,
-  getPositions,
-} from "./dataFetching";
+import { createTileCatcher, fetchOasisFromPosition, fetchXHRCookies, getPositions } from "./dataFetching";
 import { sortOasesByChebyshevDistance } from "./oasisMath";
 import { delay } from "../../../utils";
 import { LoggerLevels } from "../../../config/logger";
@@ -49,12 +43,12 @@ export const fetchOasis = async (
       index === self.findIndex((t) => t.position.x === oasis.position.x && t.position.y === oasis.position.y)
   );
 
-  const validAnimals = ["Rat", "Spider", "Bat", "Wild Boar"];
+  const validRichAnimals = ["Rat", "Spider", "Bat", "Wild Boar"];
   const mustIncludeAnimals = ["Rat"];
   // Get only "rich" oases (clay)
   const richOasis = filterOutSameOasis.filter((oasis) => {
     const animals = Object.keys(oasis.units);
-    const hasInvalidAnimal = animals.some((animal) => !validAnimals.includes(animal));
+    const hasInvalidAnimal = animals.some((animal) => !validRichAnimals.includes(animal));
 
     if (hasInvalidAnimal) {
       return false;
@@ -62,6 +56,18 @@ export const fetchOasis = async (
 
     const hasRequiredAnimal = mustIncludeAnimals.every((animal) => animals.includes(animal));
     if (!hasRequiredAnimal) {
+      return false;
+    }
+
+    return true;
+  });
+
+  const validWoodAnimals = ["Wild Boar", "Wolf", "Bear", "Tiger"];
+  const woodOasis = filterOutSameOasis.filter((oasis) => {
+    const animals = Object.keys(oasis.units);
+    const hasInvalidAnimal = animals.some((animal) => !validWoodAnimals.includes(animal));
+
+    if (hasInvalidAnimal) {
       return false;
     }
 
@@ -78,24 +84,61 @@ export const getOnlyNewOasis = (allOasis: OasisPosition[], newOasis: OasisPositi
   });
 };
 
-export const getRichOasis = (oasis: OasisPosition[]) => {
+export interface OasisPosition {
+  units: {
+    [key: string]: string;
+  };
+  position: { x: number; y: number };
+  distance?: number;
+  wasSend?: boolean;
+  type?: OasisType;
+}
+
+export enum OasisType {
+  Rich = "Rich",
+  Wood = "Wood",
+}
+
+export const getRichAndWoodOasis = (oasis: OasisPosition[]) => {
   const validAnimals = ["Rat", "Spider", "Bat", "Wild Boar"];
-  const mustIncludeAnimals = ["Rat", "Wild Boar"];
+  const mustIncludeAnimals = ["Rat"];
   // Get only "rich" oases (clay)
-  const richOasis = oasis.filter((oasis) => {
-    const animals = Object.keys(oasis.units);
-    const hasInvalidAnimal = animals.some((animal) => !validAnimals.includes(animal));
+  const richOasis = oasis
+    .map((oasis) => {
+      const animals = Object.keys(oasis.units);
+      const hasInvalidAnimal = animals.some((animal) => !validAnimals.includes(animal));
 
-    if (hasInvalidAnimal) {
-      return false;
-    }
+      if (hasInvalidAnimal) {
+        return null;
+      }
 
-    const hasRequiredAnimal = mustIncludeAnimals.every((animal) => animals.includes(animal));
-    if (!hasRequiredAnimal) {
-      return false;
-    }
+      const hasRequiredAnimal = mustIncludeAnimals.every((animal) => animals.includes(animal));
+      if (!hasRequiredAnimal) {
+        return null;
+      }
 
-    return true;
-  });
-  return richOasis;
+      return {
+        ...oasis,
+        type: OasisType.Rich,
+      };
+    })
+    .filter((o) => o !== null) as OasisPosition[];
+
+  const validWoodAnimals = ["Wild Boar", "Wolf", "Bear", "Tiger"];
+  const woodOasis = oasis
+    .map((oasis) => {
+      const animals = Object.keys(oasis.units);
+      const hasInvalidAnimal = animals.some((animal) => !validWoodAnimals.includes(animal));
+
+      if (hasInvalidAnimal) {
+        return null;
+      }
+
+      return {
+        ...oasis,
+        type: OasisType.Wood,
+      };
+    })
+    .filter((o) => o !== null) as OasisPosition[];
+  return [...richOasis, ...woodOasis];
 };

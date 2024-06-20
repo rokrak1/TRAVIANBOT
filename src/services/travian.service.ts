@@ -16,7 +16,7 @@ export const travianStart = async (
   additionalConfiguration?: OasisAdditionalConfiguration
 ) => {
   try {
-    const { type } = configurations;
+    const { type, travianDomain } = configurations;
 
     if (!type) {
       await serverLogger(LoggerLevels.ERROR, `Bot type is not defined for botId: ${botId}`);
@@ -44,7 +44,7 @@ export const travianStart = async (
     } else if (type === BotType.FARMER) {
       await startFarmer(page);
     } else if (type === BotType.OASIS_FARMER) {
-      await startOasisFarmer(page, additionalConfiguration || ({} as OasisAdditionalConfiguration));
+      await startOasisFarmer(page, travianDomain, additionalConfiguration || ({} as OasisAdditionalConfiguration));
     }
 
     // Do some random clicks to make it look more human (2 to 5 clicks)

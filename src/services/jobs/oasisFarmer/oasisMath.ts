@@ -1,20 +1,14 @@
-import { OasisPosition } from "./dataFetching";
+import { OasisPosition } from "./fetchOasis";
 
 interface VillageCords {
   x: number;
   y: number;
 }
 
-export function groupOasesByDistanceRange(
-  village: VillageCords,
-  oases: OasisPosition[]
-) {
+export function groupOasesByDistanceRange(village: VillageCords, oases: OasisPosition[]) {
   // Calculate distance and add it to each oasis
   oases.forEach((oasis) => {
-    oasis.distance = Math.max(
-      Math.abs(oasis.position.x - village.x),
-      Math.abs(oasis.position.y - village.y)
-    );
+    oasis.distance = Math.max(Math.abs(oasis.position.x - village.x), Math.abs(oasis.position.y - village.y));
   });
 
   // Distance ranges
@@ -51,19 +45,10 @@ export function groupOasesByDistanceRange(
 }
 
 // Function to sort by Chebyshev distance
-export function sortOasesByChebyshevDistance(
-  village: { x: number; y: number },
-  oases: OasisPosition[]
-) {
+export function sortOasesByChebyshevDistance(village: { x: number; y: number }, oases: OasisPosition[]) {
   return oases.sort((a, b) => {
-    const distA = Math.max(
-      Math.abs(a.position.x - village.x),
-      Math.abs(a.position.y - village.y)
-    );
-    const distB = Math.max(
-      Math.abs(b.position.x - village.x),
-      Math.abs(b.position.y - village.y)
-    );
+    const distA = Math.max(Math.abs(a.position.x - village.x), Math.abs(a.position.y - village.y));
+    const distB = Math.max(Math.abs(b.position.x - village.x), Math.abs(b.position.y - village.y));
     return distA - distB; // Asc
   });
 }
