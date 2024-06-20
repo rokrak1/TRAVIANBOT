@@ -84,9 +84,13 @@ export const createNewPageAndExecuteRaid = async (page: Page, oasis: OasisPositi
     };
   }
 
-  const maxTroops = attackingTroop.oasisType === OasisType.Rich ? 1200 : 10000;
+  const maxTroops = attackingTroop.oasisType === OasisType.Rich ? 1500 : 12000;
   if (requiredTroops > maxTroops)
-    return { status: LoggerLevels.ERROR, terminate: false, message: `OASIS - max troops value exceeded ${maxTroops}` };
+    return {
+      status: LoggerLevels.ERROR,
+      terminate: false,
+      message: `OASIS - max troops exceeded, ${maxTroops} of ${requiredTroops} (${oasis.position.x}|${oasis.position.y})`,
+    };
 
   const raidConfiguration: OasisRaidConfiguration = {
     ...oasis,
@@ -165,10 +169,10 @@ export const executeOasisRaid = async (page: Page, raidConfiguration: OasisRaidC
 
   if (!troopCount)
     return {
-      status: LoggerLevels.ERROR,
+      status: LoggerLevels.INFO,
       terminate: true,
       terminateOasis: attackingTroop.oasisType,
-      message: "OASIS - troop count not found, terminating loop...",
+      message: `OASIS - troop count not found, stopping ${attackingTroop.oasisType}...`,
     };
 
   const parsedCount = parseValue(troopCount);
@@ -176,10 +180,10 @@ export const executeOasisRaid = async (page: Page, raidConfiguration: OasisRaidC
 
   if (parsedCount < minTroopCount)
     return {
-      status: LoggerLevels.ERROR,
+      status: LoggerLevels.INFO,
       terminate: true,
       terminateOasis: attackingTroop.oasisType,
-      message: "OASIS - not enough troops to execute raid, terminating loop...",
+      message: "OASIS - not enough troops to execute raid, stopping ${attackingTroop.oasisType}...",
     };
 
   if (parsedCount < requiredTroops)
@@ -227,7 +231,7 @@ export const executeOasisRaid = async (page: Page, raidConfiguration: OasisRaidC
   return {
     status: LoggerLevels.SUCCESS,
     terminate: false,
-    message: `Started raiding oasis at ${x}|${y} with ${requiredTroops} troops`,
+    message: `Started raiding oasis at ${x}|${y} with ${troopsToSend} troops`,
   };
 };
 

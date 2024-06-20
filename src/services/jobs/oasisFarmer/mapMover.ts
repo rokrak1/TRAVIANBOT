@@ -156,7 +156,7 @@ interface VisibleValue {
   value: number;
 }
 
-export const findVisibleXValues = async (page: Page, ruler: "x" | "y") => {
+export const findVisibleXYValues = async (page: Page, ruler: "x" | "y") => {
   const wOrH = ruler === "y" ? "height" : "width";
   const tOrL = ruler === "y" ? "top" : "left";
   const mapWidth = ruler === "y" ? 401 : 543;
@@ -218,8 +218,8 @@ interface ClickableSquares {
 }
 
 const findVisibleValues = async (page: Page, mapInfo: MapInfo): Promise<ClickableSquares[]> => {
-  const { values: xValues, offsetParent: xOffset } = await findVisibleXValues(page, "x");
-  const { values: yValues, offsetParent: yOffset } = await findVisibleXValues(page, "y");
+  const { values: xValues, offsetParent: xOffset } = await findVisibleXYValues(page, "x");
+  const { values: yValues, offsetParent: yOffset } = await findVisibleXYValues(page, "y");
 
   const unavailablePositions = await getUnavailablePositions(page);
 
