@@ -1,11 +1,7 @@
 import { FastifyReply, FastifyRequest, HookHandlerDoneFunction } from "fastify";
 import jwt from "jsonwebtoken";
 
-const jsonwebtokenAuth = (
-  req: FastifyRequest,
-  reply: FastifyReply,
-  done: HookHandlerDoneFunction
-) => {
+const jsonwebtokenAuth = (req: FastifyRequest, reply: FastifyReply, done: HookHandlerDoneFunction) => {
   try {
     const token = req.headers.authorization;
     if (process.env.DEV_MODE) {
