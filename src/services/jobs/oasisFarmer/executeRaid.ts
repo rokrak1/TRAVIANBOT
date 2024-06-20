@@ -197,8 +197,10 @@ export const executeOasisRaid = async (page: Page, raidConfiguration: OasisRaidC
       message: "OASIS - input field not found",
     };
 
+  const minViableTroops = attackingTroop.type === "infantry" ? 300 : 40;
+  const troopsToSend = requiredTroops < minViableTroops ? minViableTroops : requiredTroops;
   await inputField.click();
-  await inputField.type(requiredTroops.toString());
+  await inputField.type(troopsToSend.toString());
 
   // Click send button
   const sendButton = await page.$("form button.green");
