@@ -108,8 +108,9 @@ export function calculateRequiredTroopsForMinimalLossAndTroopsUsed(attckTroop: U
 
   const maxPercent = 0.7;
   const subtractor = 0.01;
-  /*  console.log("OUT-totalDefence:", totalDefence);
-  console.log("offenceSingleTroop:", offenceSingleTroop); */
+  console.log("ATTAKCINGTROP_", attackingTroop);
+  console.log("OUT-totalDefence:", totalDefence);
+  console.log("offenceSingleTroop:", offenceSingleTroop);
 
   let troopsRequired = 0;
   for (let i = maxPercent; i > 0; i -= subtractor) {
@@ -124,9 +125,11 @@ export function calculateRequiredTroopsForMinimalLossAndTroopsUsed(attckTroop: U
     }
 
     const { totalResourcesLost, totalUnitsLost } = calculateLosses;
-    /* console.log("requiredTroops:", requiredTroops);
-    console.log("TotalUnitsLost:", totalUnitsLost); */
-    let factor = totalReward < 4500 ? 0 : 4.2;
+    console.log("requiredTroops:", requiredTroops);
+    console.log("TotalUnitsLost:", totalUnitsLost);
+    const minFactorBasedOnUnitType = attackingTroop.type === "infantry" ? 0.5 : 0;
+    const maxFactorBasedOnUnitType = attackingTroop.type === "infantry" ? 4.2 : 4.2;
+    let factor = totalReward < 4500 ? minFactorBasedOnUnitType : maxFactorBasedOnUnitType;
     const totalResourcesLostWithFactor = factor === 0 ? 0 : totalReward / factor;
     if (totalResourcesLost <= totalResourcesLostWithFactor) {
       troopsRequired = requiredTroops;

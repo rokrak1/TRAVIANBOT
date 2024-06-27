@@ -1,12 +1,13 @@
 import { Page } from "puppeteer";
-import { OasisAdditionalConfiguration } from "./oasisFarmer/types";
 import { allAttackingOasis, getAttackingTroops, troopsConfig } from "./oasisFarmer/allTroops";
 import { delay } from "../../utils";
 import { createExplorationGrid, goToMapFetchBoundingBox } from "./oasisFarmer/oasisUtils";
 import { startMovingMap } from "./oasisFarmer/mapMover";
 import { getAllAttackingOasis } from "./oasisFarmer/getAttackingOasis";
+import WindMouse from "../funcs/windMouse";
+import { OasisFarmerConfigurationType } from "../../types/main.types";
 
-export const startOasisFarmer = async (page: Page, travianDomain: string, config: OasisAdditionalConfiguration) => {
+export const startOasisFarmer = async (page: Page, travianDomain: string, config: OasisFarmerConfigurationType) => {
   // Get already attacking oasis
   const alreadyAttackingOasis = await getAllAttackingOasis(page, travianDomain);
   allAttackingOasis.push(...alreadyAttackingOasis);
@@ -16,7 +17,7 @@ export const startOasisFarmer = async (page: Page, travianDomain: string, config
 
   // Move the mouse to the map navigation
   const { centerX, centerY } = mapInfo;
-  await page.mouse.move(centerX, centerY);
+  await WindMouse.getInstance().mouseMove(page, centerX, centerY);
   await delay(500, 801);
 
   // Zoom out the map

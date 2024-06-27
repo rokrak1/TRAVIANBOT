@@ -1,6 +1,6 @@
 import "dotenv/config";
 import app from "./main";
-import { getSupabaseActiveJobAndStartWorkersWithCron } from "./controllers/cron.controller";
+import { getSupabaseActiveJobAndStartWorkersWithCron } from "./services/cron.service";
 
 const start = async () => {
   try {
@@ -9,8 +9,7 @@ const start = async () => {
       host: "0.0.0.0",
     });
 
-    !process.env.DEV_MODE &&
-      (await getSupabaseActiveJobAndStartWorkersWithCron());
+    !process.env.DEV_MODE && (await getSupabaseActiveJobAndStartWorkersWithCron());
 
     console.log(`Server running at ${str}`);
   } catch (err) {

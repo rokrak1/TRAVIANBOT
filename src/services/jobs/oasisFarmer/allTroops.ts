@@ -2,6 +2,7 @@ import { OasisPosition, OasisType } from "./fetchOasis";
 import { UnitInfo } from "./lossCalculator";
 import { Tribes, Unit } from "./types";
 import troops from "./troops.json";
+import { AttackingTroop } from "../../../types/main.types";
 
 export const oases: OasisPosition[] = [];
 export const allAttackingOasis: { x: number; y: number }[] = [];
@@ -89,10 +90,7 @@ export const getAttackingTroop = (
   return { ...selectedTroop, level: attackingTroop.level, oasisType: attackingTroop.type };
 };
 
-export const getAttackingTroops = (
-  tribe: string,
-  attackingTroops: { name: Unit; level: number; type: OasisType }[]
-): UnitInfo[] => {
+export const getAttackingTroops = (tribe: string, attackingTroops: AttackingTroop[]): UnitInfo[] => {
   return attackingTroops.map((attackingTroop) => getAttackingTroop(tribe, attackingTroop));
 };
 

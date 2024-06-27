@@ -1,4 +1,6 @@
 import { CronJob, CronTime } from "cron";
+import { BotType } from "../services/utils/database";
+import { VillageConfiguration } from "../types/main.types";
 
 enum CronIntervals {
   ONE_MINUTE = "*/1 * * * *",
@@ -18,22 +20,34 @@ enum CronIntervals {
   THREE_HOURS = "0 */3 * * *",
 }
 
-interface TravianAccountInfo {
+export interface Proxy {
+  id: string;
+  proxy_domain: string;
+  proxy_username: string;
+  proxy_password: string;
+  proxy_timezones: {
+    from: number;
+    to: number;
+  };
+}
+
+interface TravianBotSettings {
   travianUsername: string;
   travianPassword: string;
   travianDomain: string;
-  proxyDomain: string;
-  proxyUsername: string;
-  proxyPassword: string;
-  type: string;
+  configurationId: string;
+  villageConfiguration: VillageConfiguration;
+  botType: string;
+  proxies: Proxy[];
 }
 
 export interface CronJobDetails {
   name: string;
   cron: CronJob;
-  botId: string;
-  options: TravianAccountInfo;
+  cronId: string;
+  options: TravianBotSettings;
   interval: keyof typeof CronIntervals;
+  botType: BotType;
 }
 export class CronManager {
   private static _instance: CronManager;
@@ -50,51 +64,54 @@ export class CronManager {
 
   add(
     name: string,
-    botId: string,
+    configurationId: string,
     periodText: keyof typeof CronIntervals,
+    botType: BotType,
     fn: () => void,
-    options: TravianAccountInfo
+    options: TravianBotSettings
   ): void {
-    if (this._jobs[botId]) {
-      if (this._jobs[botId].cron.running) {
-        throw new Error(`Cron job with id ${botId} is already running.`);
+    const cronId = `${configurationId}_${botType}`;
+    if (this._jobs[cronId]) {
+      if (this._jobs[cronId].cron.running) {
+        throw new Error(`Cron job with id ${cronId} is already running.`);
       }
-      if (this._jobs[botId].interval !== periodText) {
-        this._jobs[botId].cron.setTime(new CronTime(CronIntervals[periodText]));
+      if (this._jobs[cronId].interval !== periodText) {
+        this._jobs[cronId].cron.setTime(new CronTime(CronIntervals[periodText]));
       }
-      this._jobs[botId].cron.start();
+      this._jobs[cronId].cron.start();
       return;
     }
-    this._jobs[botId] = {
+    this._jobs[cronId] = {
       name,
-      botId,
+      cronId,
       cron: new CronJob(CronIntervals[periodText], fn, null, true),
       options,
       interval: periodText,
+      botType,
     };
   }
 
-  stop(botId: string): void {
-    const job = this._jobs[botId];
+  stop(cronId: string): void {
+    const job = this._jobs[cronId];
     if (!job) {
-      throw new Error(`Cron job with id ${botId} does not exist.`);
+      throw new Error(`Cron job with id ${cronId} does not exist.`);
     }
     job.cron.stop();
   }
 
-  delete(botId: string): void {
-    const job = this._jobs[botId];
+  delete(cronId: string): void {
+    const job = this._jobs[cronId];
     if (!job) {
-      throw new Error(`Cron job with id ${botId} does not exist.`);
+      throw new Error(`Cron job with id ${cronId} does not exist.`);
     }
     job.cron.stop();
-    delete this._jobs[botId];
+    delete this._jobs[cronId];
   }
 
-  info(botId: string): CronJobDetails {
-    const job = this._jobs[botId];
+  info(cronId: string): CronJobDetails {
+    const job = this._jobs[cronId];
     if (!job) {
-      throw new Error(`Cron job with id ${botId} does not exist.`);
+      throw new Error(`Cron job with id ${cronId} does not exist.`);
     }
     return job;
   }
@@ -112,29 +129,29 @@ export class CronManager {
     return this._jobs;
   }
 
-  running(botId: string): boolean {
-    const job = this._jobs[botId];
+  running(cronId: string): boolean {
+    const job = this._jobs[cronId];
     if (!job) {
       return false;
     }
     return job.cron.running;
   }
 
-  lastDate(botId: string): Date | null {
-    const job = this._jobs[botId];
+  lastDate(cronId: string): Date | null {
+    const job = this._jobs[cronId];
     if (!job) {
-      throw new Error(`Cron job with id ${botId} does not exist.`);
+      throw new Error(`Cron job with id ${cronId} does not exist.`);
     }
     return job.cron.lastDate();
   }
 
-  nextDate(botId: string): any {
-    const job = this._jobs[botId];
+  nextDate(cronId: string): any {
+    const job = this._jobs[cronId];
     if (!job) {
-      throw new Error(`Cron job with id ${botId} does not exist.`);
+      throw new Error(`Cron job with id ${cronId} does not exist.`);
     }
     return job.cron.nextDate();
   }
 }
 
-export { CronIntervals, TravianAccountInfo };
+export { CronIntervals, TravianBotSettings };

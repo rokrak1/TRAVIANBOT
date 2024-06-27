@@ -1,50 +1,61 @@
 import { delay } from "../utils";
 import { clickNavigationSlot } from "./jobs/travianActions/clicker";
 import { LoggerLevels, serverLogger } from "../config/logger";
-import { TravianAccountInfo } from "../utils/CronManager";
 import { firstSteps } from "./funcs/firstSteps";
 import { BrowserInstance } from "./funcs/browserConfiguration";
 import { BotType } from "./utils/database";
 import { removeUserData } from "./utils";
 import { startVillageBuilder, startFarmer, startOasisFarmer } from "./jobs";
-import { OasisAdditionalConfiguration } from "./jobs/oasisFarmer/types";
-import { selectVillage } from "./funcs/selectVillage";
+import WindMouse from "./funcs/windMouse";
+import { installMouseHelper } from "../utils/fakeMouse";
+import { randomInt } from "crypto";
+import { FarmerConfigurationType, OasisFarmerConfigurationType, VillageConfigurationType } from "../types/main.types";
+import { TravianBotSettings } from "../utils/CronManager";
 
 export const travianStart = async (
   botId: string,
-  configurations: TravianAccountInfo,
-  additionalConfiguration?: OasisAdditionalConfiguration
+  travianBotSettings: TravianBotSettings,
+  config: FarmerConfigurationType | OasisFarmerConfigurationType | VillageConfigurationType[]
 ) => {
   try {
-    const { type, travianDomain } = configurations;
-
-    if (!type) {
-      await serverLogger(LoggerLevels.ERROR, `Bot type is not defined for botId: ${botId}`);
-      return;
-    }
+    const { travianDomain, botType, configurationId, villageConfiguration } = travianBotSettings;
 
     // Create new Browser with configuration
     const browser = BrowserInstance.getInstance();
-    await browser.init(botId, configurations.proxyUsername, configurations.proxyPassword);
-    const page = await browser.createPage();
-    // First steps that should be done on every bot
-    await firstSteps(page, configurations);
-
-    // Select the village
-    if (additionalConfiguration?.selectedVillage) {
-      const villageExists = await selectVillage(page, additionalConfiguration.selectedVillage);
-      if (!villageExists) {
-        throw new Error(`Village ${additionalConfiguration.selectedVillage} not found for botId: ${botId}`);
-      }
+    console.log("BrowserInstance", browser);
+    const page = await browser.init(botId, travianBotSettings);
+    if (!page) {
+      throw new Error("Page not found");
     }
+    await installMouseHelper(page);
+    await page.goto("https://www.travian.com/");
+    await delay(1000, 2000);
 
+    // Initialize WindMouse class
+    const mouse = WindMouse.getInstance();
+    mouse.init({
+      startX: randomInt(0, 1920),
+      startY: randomInt(0, 1080),
+      endX: 0,
+      endY: 0,
+      gravity: 6.0,
+      wind: 7,
+      minWait: 5,
+      maxWait: 15,
+      maxStep: 6,
+      targetArea: 1.0,
+    });
+
+    // First steps that should be done on every bot
+    await firstSteps(page, travianBotSettings);
+    console.log("BotType", botType, configurationId, config);
     // Proceed with bot type
-    if (type === BotType.VILLAGE_BUILDER) {
-      await startVillageBuilder(botId, page);
-    } else if (type === BotType.FARMER) {
-      await startFarmer(page);
-    } else if (type === BotType.OASIS_FARMER) {
-      await startOasisFarmer(page, travianDomain, additionalConfiguration || ({} as OasisAdditionalConfiguration));
+    if (botType === BotType.VILLAGE_BUILDER) {
+      await startVillageBuilder(page, configurationId, config as VillageConfigurationType[], villageConfiguration);
+    } else if (botType === BotType.FARMER) {
+      await startFarmer(page, config as FarmerConfigurationType);
+    } else if (botType === BotType.OASIS_FARMER) {
+      await startOasisFarmer(page, travianDomain, config as OasisFarmerConfigurationType);
     }
 
     // Do some random clicks to make it look more human (2 to 5 clicks)
@@ -58,7 +69,7 @@ export const travianStart = async (
     // Close browser
     await delay(3278, 5122);
   } catch (e) {
-    console.error(e);
+    console.error("ERROR:", e);
 
     // Remove user cache
     await removeUserData(botId);

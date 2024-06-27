@@ -9,7 +9,8 @@ import {
   clickOnUpgradeButton,
 } from "./builder";
 import { LoggerLevels } from "../../../config/logger";
-import { PlanItem, PlanSingelton, PlanStatus } from "../../funcs/plan";
+import { PlanSingelton } from "../../funcs/plan";
+import { PlanItem, PlanStatus } from "../../../types/main.types";
 
 export const upgradeFields = async (page: Page, row: PlanItem, underConstructionNumber: number) => {
   const pageUrl = page.url();
@@ -44,15 +45,7 @@ export const upgradeFields = async (page: Page, row: PlanItem, underConstruction
         await clickOnBuildingSlot(page, buildingSlot);
         await clickOnUpgradeButton(page);
         await page.logger(LoggerLevels.SUCCESS, `Field upgraded.`);
-        try {
-          await page.waitForNavigation({
-            waitUntil: "networkidle0",
-            timeout: 5000,
-          });
-        } catch (e) {
-          await page.logger(LoggerLevels.ERROR, "waiting for navigation failed..");
-          return;
-        }
+        PlanSingelton.getInstance().updateStatus(row.id, PlanStatus.UPGRADING);
         underConstructionNumber++;
       } else if (isFieldNotNow) {
         console.log("Field is not good to upgrade.. Checking hero resources...");
@@ -76,18 +69,9 @@ export const upgradeFields = async (page: Page, row: PlanItem, underConstruction
         const upgradeFunc = forceUpgrade ? clickOnExchangeButton : clickOnUpgradeButton;
         await upgradeFunc(page);
         await page.logger(LoggerLevels.SUCCESS, `Field upgraded.`);
-        console.log("Field upgraded..");
         PlanSingelton.getInstance().updateStatus(row.id, PlanStatus.UPGRADING);
-        try {
-          await page.waitForNavigation({
-            waitUntil: "networkidle0",
-            timeout: 5000,
-          });
-        } catch (e) {
-          await page.logger(LoggerLevels.ERROR, "waiting for navigation failed..");
-          return;
-        }
         underConstructionNumber++;
+        console.log("Field upgraded..");
       }
     }
   }

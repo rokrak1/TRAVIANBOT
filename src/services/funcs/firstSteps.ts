@@ -1,8 +1,8 @@
 import { Page } from "puppeteer";
-import { TravianAccountInfo } from "../../utils/CronManager";
 import { loginIfNeccessary } from "../jobs/travianActions/login";
+import { TravianBotSettings } from "../../utils/CronManager";
 
-export const firstSteps = async (page: Page, configuration: TravianAccountInfo) => {
+export const firstSteps = async (page: Page, configuration: TravianBotSettings) => {
   const { travianDomain, travianUsername, travianPassword } = configuration;
 
   // Go to domain

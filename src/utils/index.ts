@@ -1,5 +1,6 @@
 import fs from "fs";
 import { Slots } from "../services/jobs/villageBuilder/csvSlots";
+import { getRandomInt } from "../services/jobs/oasisFarmer/oasisUtils";
 
 export const delay = async (min: number, max: number) => {
   const time = Math.floor(Math.random() * (max - min + 1) + min);
@@ -11,6 +12,27 @@ export const parseValue = (resource: string): number => {
   const cleanedResource = resource.replace(/[^\d,]/g, "").replace(/,/g, "");
   const value = parseInt(cleanedResource, 10);
   return value;
+};
+
+export interface BBox {
+  x: number;
+  y: number;
+  width: number;
+  height: number;
+}
+
+export const randomCenteredBoundingBoxClickCoordinates = (bbox: BBox, offSet?: number) => {
+  const offset = offSet || 5;
+  const x = getRandomInt(bbox.x + bbox.width / 3, bbox.x + (bbox.width / 3) * 2);
+  const y = getRandomInt(bbox.y + bbox.height / 3, bbox.y + (bbox.height / 3) * 2);
+  return { x, y };
+};
+
+export const randomBoundingBoxClickCoordinates = (bbox: BBox, offSet?: number) => {
+  const offset = offSet || 5;
+  const x = getRandomInt(bbox.x + offset, bbox.x + bbox.width - offset);
+  const y = getRandomInt(bbox.y + offset, bbox.y + bbox.height - offset);
+  return { x, y };
 };
 
 export interface CSV_ROW {

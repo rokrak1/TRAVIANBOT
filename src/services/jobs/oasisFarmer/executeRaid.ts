@@ -1,11 +1,12 @@
 import { ElementHandle, Page } from "puppeteer";
-import { delay, parseValue } from "../../../utils";
+import { delay, parseValue, randomBoundingBoxClickCoordinates } from "../../../utils";
 import { allTroops, getNatureTroops, troopsConfig } from "./allTroops";
 import { Tribes } from "./types";
 import { UnitInfo, calculateRequiredTroopsForMinimalLossAndTroopsUsed } from "./lossCalculator";
 import { OasisPosition, OasisType } from "./fetchOasis";
 import { LoggerLevels } from "../../../config/logger";
 import { BrowserInstance } from "../../funcs/browserConfiguration";
+import WindMouse from "../../funcs/windMouse";
 
 export interface OasisRaidConfiguration extends OasisPosition {
   requiredTroops: number;
@@ -51,21 +52,22 @@ const getRaidLink = async (page: Page) => {
     return null;
   }
 
-  return raidButton.evaluate((el) => el.querySelector("a")?.href);
+  const raidBbox = await raidButton.boundingBox();
+  const link = await raidButton.evaluate((el) => el.querySelector("a")?.href);
+  if (!raidBbox) {
+    await page.logger(LoggerLevels.ERROR, "No raid button bounding box found");
+    console.log("No raid button bounding box found");
+    return { bbox: null, link, ctrlClick: false };
+  } else {
+    return {
+      bbox: randomBoundingBoxClickCoordinates(raidBbox),
+      link,
+      ctrlClick: true,
+    };
+  }
 };
 
 export const createNewPageAndExecuteRaid = async (page: Page, oasis: OasisPosition) => {
-  // Get Url for raid
-  const raidLink = await getRaidLink(page);
-  if (!raidLink) {
-    console.log("OASIS - raid link not found");
-    return {
-      status: LoggerLevels.ERROR,
-      terminate: false,
-      message: "OASIS - raid link not found",
-    };
-  }
-
   const attackingTroop = troopsConfig.selectedTroops.find((troop) => troop.oasisType === oasis.type);
 
   if (!attackingTroop) {
@@ -76,7 +78,9 @@ export const createNewPageAndExecuteRaid = async (page: Page, oasis: OasisPositi
   const natureTroops = getNatureTroops(oasis);
   const requiredTroops = calculateRequiredTroopsForMinimalLossAndTroopsUsed(attackingTroop, natureTroops);
 
+  console.log("REQUIRED TROOPS: ", requiredTroops);
   if (!requiredTroops) {
+    console.log("OASIS - required troops not found");
     return {
       status: LoggerLevels.ERROR,
       terminate: false,
@@ -99,13 +103,51 @@ export const createNewPageAndExecuteRaid = async (page: Page, oasis: OasisPositi
     tribe,
   };
 
-  // Open new tab
-  const newPage = await BrowserInstance.getInstance().createPage();
-  await newPage.goto(raidLink);
+  // Get Url for raid
+  const raidLink = await getRaidLink(page);
+  if (!raidLink) {
+    console.log("OASIS - raid link not found");
+    return {
+      status: LoggerLevels.ERROR,
+      terminate: false,
+      message: "OASIS - raid link not found",
+    };
+  }
+  const { bbox, link, ctrlClick } = raidLink;
+  let newPageRef = null;
+  if (!ctrlClick && link) {
+    newPageRef = await BrowserInstance.getInstance().createPage();
+    newPageRef.goto(link);
+  } else if (bbox) {
+    await page.keyboard.down("Control");
+    await WindMouse.getInstance().mouseMoveAndClick(page, bbox.x, bbox.y);
+    await page.keyboard.up("Control");
+    await delay(1000, 1100);
+    const pages = await BrowserInstance.getInstance().getPages();
+
+    if (pages.length === 1 && link) {
+      newPageRef = await BrowserInstance.getInstance().createPage();
+      newPageRef.goto(link);
+    } else {
+      newPageRef = pages[pages.length - 1];
+      newPageRef.bringToFront();
+    }
+  }
+
+  if (!newPageRef) {
+    return {
+      status: LoggerLevels.ERROR,
+      terminate: false,
+      message: "OASIS - new page not found",
+    };
+  }
+
   try {
-    await newPage.waitForSelector("#build", { timeout: 5000 });
+    await newPageRef.waitForSelector("#build", { timeout: 5000 });
   } catch (e) {
-    await newPage.close();
+    await newPageRef.close();
+    await page.bringToFront();
+    await delay(600, 650);
     return {
       status: LoggerLevels.ERROR,
       terminate: false,
@@ -114,12 +156,14 @@ export const createNewPageAndExecuteRaid = async (page: Page, oasis: OasisPositi
   }
   await delay(700, 800);
 
-  const raidStatus = await executeOasisRaid(newPage, raidConfiguration);
+  const raidStatus = await executeOasisRaid(newPageRef, raidConfiguration);
 
   if (raidStatus.status === LoggerLevels.SUCCESS) {
     oasis.wasSend = true;
   }
-  await newPage.close();
+  await newPageRef.close();
+  await page.bringToFront();
+  await delay(600, 650);
 
   return raidStatus;
 };
@@ -171,7 +215,7 @@ export const executeOasisRaid = async (page: Page, raidConfiguration: OasisRaidC
     return {
       status: LoggerLevels.INFO,
       terminate: true,
-      terminateOasis: attackingTroop.oasisType,
+      terminateOasis: undefined, // attackingTroop.oasisType,
       message: `OASIS - troop count not found, stopping ${attackingTroop.oasisType}...`,
     };
 
@@ -182,7 +226,7 @@ export const executeOasisRaid = async (page: Page, raidConfiguration: OasisRaidC
     return {
       status: LoggerLevels.INFO,
       terminate: true,
-      terminateOasis: attackingTroop.oasisType,
+      terminateOasis: undefined, //attackingTroop.oasisType,
       message: "OASIS - not enough troops to execute raid, stopping ${attackingTroop.oasisType}...",
     };
 
@@ -203,8 +247,20 @@ export const executeOasisRaid = async (page: Page, raidConfiguration: OasisRaidC
 
   const minViableTroops = attackingTroop.type === "infantry" ? 500 : 60;
   const troopsToSend = requiredTroops < minViableTroops ? minViableTroops : requiredTroops;
-  await inputField.click();
-  await inputField.type(troopsToSend.toString());
+
+  const inputBbox = await inputField.boundingBox();
+
+  if (!inputBbox) {
+    await inputField.click();
+  } else {
+    const { x: inputX, y: inputY } = randomBoundingBoxClickCoordinates(inputBbox);
+    await WindMouse.getInstance().mouseMoveAndClick(page, inputX, inputY);
+  }
+
+  for (let chat of troopsToSend.toString()) {
+    await page.keyboard.type(chat);
+    await delay(50, 100);
+  }
 
   // Click send button
   const sendButton = await page.$("form button.green");
@@ -215,7 +271,13 @@ export const executeOasisRaid = async (page: Page, raidConfiguration: OasisRaidC
       message: "OASIS - send button not found",
     };
 
-  await sendButton.click();
+  const sendBbox = await sendButton.boundingBox();
+  if (!sendBbox) {
+    await sendButton.click();
+  } else {
+    const { x: sendX, y: sendY } = randomBoundingBoxClickCoordinates(sendBbox);
+    await WindMouse.getInstance().mouseMoveAndClick(page, sendX, sendY);
+  }
   await page.waitForNavigation({ waitUntil: "networkidle2" });
 
   // Confirm send
@@ -226,7 +288,14 @@ export const executeOasisRaid = async (page: Page, raidConfiguration: OasisRaidC
       terminate: false,
       message: "OASIS - confirm button not found",
     };
-  await confirmButton.click();
+
+  const confirmBbox = await confirmButton.boundingBox();
+  if (!confirmBbox) {
+    await confirmButton.click();
+  } else {
+    const { x: confirmX, y: confirmY } = randomBoundingBoxClickCoordinates(confirmBbox);
+    await WindMouse.getInstance().mouseMoveAndClick(page, confirmX, confirmY);
+  }
   await delay(600, 700);
   return {
     status: LoggerLevels.SUCCESS,

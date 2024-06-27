@@ -4,40 +4,33 @@ import { getResourceAmount } from "./resources";
 import { LoggerLevels } from "../../../config/logger";
 import { NavigationTypes } from "./navigationSlots";
 import { clickNavigationSlot } from "../travianActions/clicker";
-import {
-  collectSingleHeroResource,
-  getAvailableHeroResources,
-} from "../travianActions/hero";
+import { collectSingleHeroResource, getAvailableHeroResources } from "../travianActions/hero";
 import { rSlots } from "./resourcesSlots";
+import { elementClick } from "../../funcs/elementClick";
 
 export const clickOnUpgradeButton = async (page: Page) => {
   await delay(200, 600);
-  const upgradeButton = await page.$(
-    ".upgradeButtonsContainer .section1 button.green"
-  );
+  const upgradeButton = await page.$(".upgradeButtonsContainer .section1 button.green");
+  console.log("upgradeButton", upgradeButton);
   if (!upgradeButton) {
     await page.logger(LoggerLevels.ERROR, "Upgrade button not found");
     console.error("ERROR: Upgrade button not found");
     return;
   }
-  await upgradeButton.click();
+  await elementClick(page, upgradeButton);
 };
 
-export const clickOnExchangeButton = async (
-  page: Page,
-  exchangeButtonManual?: any
-) => {
+export const clickOnExchangeButton = async (page: Page, exchangeButtonManual?: any) => {
   await delay(200, 600);
-  const exchangeButton =
-    exchangeButtonManual || (await page.$(".upgradeBlocked button.exchange"));
+  const exchangeButton = exchangeButtonManual || (await page.$(".upgradeBlocked button.exchange"));
   if (!exchangeButton) {
     await page.logger(LoggerLevels.ERROR, "Exchange button not found");
     console.error("ERROR: Exchange button not found");
     return;
   }
 
-  await exchangeButton.click();
-  await delay(950, 1150);
+  await elementClick(page, exchangeButton);
+  await delay(450, 1150);
 
   const distributecontainer = await page.$("#build.exchangeResources");
   if (!distributecontainer) {
@@ -46,9 +39,7 @@ export const clickOnExchangeButton = async (
     return;
   }
   console.log("Distribute container found");
-  const distributeButton = await distributecontainer.$(
-    "#submitText button.gold"
-  );
+  const distributeButton = await distributecontainer.$("#submitText button.gold");
   if (!distributeButton) {
     await page.logger(LoggerLevels.ERROR, "Distribute button not found");
     console.error("ERROR: Distribute button not found");
@@ -77,15 +68,10 @@ export const clickOnExchangeButton = async (
   await clickOnUpgradeButton(page);
 };
 
-export const getAmountToUpgrade = async (
-  page: Page,
-  resources?: (string | null)[]
-) => {
+export const getAmountToUpgrade = async (page: Page, resources?: (string | null)[]) => {
   const realResources =
     resources ||
-    (await page.$$eval(".upgradeBuilding #contract .resource .value", (el) =>
-      el.map((e) => e.textContent)
-    ));
+    (await page.$$eval(".upgradeBuilding #contract .resource .value", (el) => el.map((e) => e.textContent)));
   if (realResources.length < 4) {
     await page.logger(LoggerLevels.ERROR, "Resources not found");
     console.error("ERROR: Resources not found");
@@ -99,13 +85,8 @@ export const getAmountToUpgrade = async (
   };
 };
 
-export const clickOnBuildingSlot = async (
-  page: Page,
-  buildingSlot?: string
-) => {
-  const buildingSlotSelector = Object.values(rSlots).find(
-    (rs) => rs.buildingId === `.${buildingSlot}`
-  )?.click;
+export const clickOnBuildingSlot = async (page: Page, buildingSlot?: string) => {
+  const buildingSlotSelector = Object.values(rSlots).find((rs) => rs.buildingId === `.${buildingSlot}`)?.click;
   if (!buildingSlotSelector) {
     await page.logger(LoggerLevels.ERROR, "Building slot not found");
     return;
@@ -125,19 +106,13 @@ export const checkAllResourcesAndAddThemIfPossible = async (
   cbNavigation: NavigationTypes,
   manualResources?: (string | null)[]
 ) => {
-  const { wood, clay, iron, crop, maxGranary, maxWarehouse } =
-    await getResourceAmount(page);
+  const { wood, clay, iron, crop, maxGranary, maxWarehouse } = await getResourceAmount(page);
   const amountToUpgrade = await getAmountToUpgrade(page, manualResources);
   if (!amountToUpgrade) {
     await page.logger(LoggerLevels.ERROR, "Amount to upgrade not found");
     return [false, false];
   }
-  const {
-    wood: nWood,
-    clay: nClay,
-    iron: nIron,
-    crop: nCrop,
-  } = amountToUpgrade;
+  const { wood: nWood, clay: nClay, iron: nIron, crop: nCrop } = amountToUpgrade;
 
   // Get hero resources
   await clickNavigationSlot(page, NavigationTypes.HERO);
@@ -169,15 +144,11 @@ export const checkAllResourcesAndAddThemIfPossible = async (
   for (let missingResource of missingResources) {
     const index = missingResources.indexOf(missingResource);
     if (missingResource < 0) {
-      await page.logger(
-        LoggerLevels.INFO,
-        `There is enough ${resources[index]}. Skipping..`
-      );
+      await page.logger(LoggerLevels.INFO, `There is enough ${resources[index]}. Skipping..`);
       console.log(`There is enough ${resources[index]}. Skipping..`);
       continue;
     }
-    const isEnoughOfCurrentResource =
-      missingResource <= heroResourcesArray[index];
+    const isEnoughOfCurrentResource = missingResource <= heroResourcesArray[index];
     if (isEnoughOfCurrentResource) {
       const resourceElement = heroResourcesElements[index]!;
       await collectSingleHeroResource(page, resourceElement, missingResource);
@@ -189,9 +160,7 @@ export const checkAllResourcesAndAddThemIfPossible = async (
       LoggerLevels.INFO,
       `Hero doesnt have enoug of ${resources[index]}. Missing amount: ${missingResource}`
     );
-    console.log(
-      `Hero doesnt have enoug of ${resources[index]}. Missing amount: ${missingResource}`
-    );
+    console.log(`Hero doesnt have enoug of ${resources[index]}. Missing amount: ${missingResource}`);
   }
 
   // Check if we should force upgrade field
@@ -202,19 +171,18 @@ export const checkAllResourcesAndAddThemIfPossible = async (
       [wood, clay, iron, crop],
       heroResourcesArray
     );
-    const upgradeFeasibility = checkUpgradeFeasibility(
-      [wood, clay, iron, crop],
-      transfarableResources,
-      [nWood, nClay, nIron, nCrop]
-    );
+    const upgradeFeasibility = checkUpgradeFeasibility([wood, clay, iron, crop], transfarableResources, [
+      nWood,
+      nClay,
+      nIron,
+      nCrop,
+    ]);
     if (upgradeFeasibility < 0) {
       await page.logger(
         LoggerLevels.INFO,
         `Not enough resources.. Missing ${upgradeFeasibility}} resource for 2x value of field cost..`
       );
-      console.log(
-        `Not enough resources.. Missing ${upgradeFeasibility}} resource for 2x value of field cost..`
-      );
+      console.log(`Not enough resources.. Missing ${upgradeFeasibility}} resource for 2x value of field cost..`);
       return [false, false];
     }
 
@@ -225,11 +193,7 @@ export const checkAllResourcesAndAddThemIfPossible = async (
         continue;
       }
       const resourceElement = heroResourcesElements[i]!;
-      await collectSingleHeroResource(
-        page,
-        resourceElement,
-        resourceAmountToBeAdded
-      );
+      await collectSingleHeroResource(page, resourceElement, resourceAmountToBeAdded);
     }
     await clickNavigationSlot(page, cbNavigation);
     return [true, true];
@@ -246,12 +210,7 @@ function calculateTransferableResources(
   heroResources: number[]
 ) {
   const buffer = 10; // This is the buffer space left in the storage
-  const maxResources = [
-    maxWarehouse - buffer,
-    maxWarehouse - buffer,
-    maxWarehouse - buffer,
-    maxGranary - buffer,
-  ]; // Maximum resources that can be stored with buffer
+  const maxResources = [maxWarehouse - buffer, maxWarehouse - buffer, maxWarehouse - buffer, maxGranary - buffer]; // Maximum resources that can be stored with buffer
 
   // Determine the maximum amount of each resource that can be transferred from the hero to the warehouse/granary
   let transferableResources = heroResources.map((heroResource, index) => {
@@ -262,15 +221,10 @@ function calculateTransferableResources(
   return transferableResources; // Return the array of transferable resource amounts
 }
 
-function checkUpgradeFeasibility(
-  currentResources: number[],
-  transferableResources: number[],
-  fieldCost: number[]
-) {
+function checkUpgradeFeasibility(currentResources: number[], transferableResources: number[], fieldCost: number[]) {
   // Calculate the new potential resources by adding the transferable amounts to the current resources
   const newResourcesSum =
-    transferableResources.reduce((s, n) => s + n, 0) +
-    currentResources.reduce((s, n) => s + n, 0);
+    transferableResources.reduce((s, n) => s + n, 0) + currentResources.reduce((s, n) => s + n, 0);
 
   // Check if the new resource amounts are at least twice the field cost
   const canUpgrade = newResourcesSum - fieldCost.reduce((s, n) => s + n, 0) * 2;
@@ -281,9 +235,7 @@ function checkUpgradeFeasibility(
 export const getAlreadyBuiltBuildings = async (page: Page) => {
   const buildingSlots = await page.$$("#villageContent .buildingSlot");
   return buildingSlots.filter(async (buildingSlot) => {
-    const attrName = await buildingSlot.evaluate((el) =>
-      el.getAttribute("data-name")
-    );
+    const attrName = await buildingSlot.evaluate((el) => el.getAttribute("data-name"));
     return attrName !== "";
   });
 };
