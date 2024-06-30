@@ -1,7 +1,7 @@
 import { Page } from "puppeteer";
 import { LoggerLevels } from "../../../config/logger";
 import WindMouse from "../../funcs/windMouse";
-import { randomBoundingBoxClickCoordinates } from "../../../utils";
+import { randomBoundingBoxClickCoordinates, randomCenteredBoundingBoxClickCoordinates } from "../../../utils";
 
 export enum NavigationTypes {
   RESOURCES = "resources",
@@ -17,7 +17,7 @@ export enum NavigationTypes {
   HERO = "heroImageButton",
 }
 
-const moveMouseAndClick = async (page: Page, selector: string, waitForSelector?: string) => {
+const moveMouseAndClick = async (page: Page, selector: string, waitForSelector?: string, centerBox?: boolean) => {
   const mouse = WindMouse.getInstance();
   const element = await page.waitForSelector(selector);
   if (!element) {
@@ -30,7 +30,11 @@ const moveMouseAndClick = async (page: Page, selector: string, waitForSelector?:
     await page.click(selector);
     return;
   }
-  const { x, y } = randomBoundingBoxClickCoordinates(bbox);
+
+  const randomBoundingBoxFunction = centerBox
+    ? randomCenteredBoundingBoxClickCoordinates
+    : randomBoundingBoxClickCoordinates;
+  const { x, y } = randomBoundingBoxFunction(bbox);
   await mouse.mouseMoveAndClick(page, x, y);
 
   if (waitForSelector) {
@@ -66,7 +70,7 @@ export const navigationSlots = {
     await moveMouseAndClick(page, "#navigation a.dailyQuests");
   },
   [NavigationTypes.QUEST_MASTER]: async (page: Page) => {
-    await moveMouseAndClick(page, "#questmasterButton");
+    await moveMouseAndClick(page, "#questmasterButton", undefined, true);
   },
   [NavigationTypes.ADVENTURES]: async (page: Page) => {
     await moveMouseAndClick(page, "#topBarHero .adventure.green");

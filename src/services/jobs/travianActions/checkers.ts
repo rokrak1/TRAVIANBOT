@@ -7,7 +7,7 @@ import { extendProtection } from "./protection";
 export const basicGameRoutines = async (page: Page) => {
   const firstStepsArray = [
     // Check if there is any adventure and start it
-    //goToClosestAdventureIfExsists,
+    goToClosestAdventureIfExsists,
     // Check daily quest and collect it
     checkIfDailyQuestCompleted,
     // Check if there is any quests completed and collect rewards

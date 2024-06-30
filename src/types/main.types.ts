@@ -1,5 +1,6 @@
 import { OasisType } from "../services/jobs/oasisFarmer/fetchOasis";
 import { Tribes, Unit } from "../services/jobs/oasisFarmer/types";
+import { RSlots } from "../services/jobs/villageBuilder/resourcesSlots";
 import { CronIntervals } from "../utils/CronManager";
 
 interface BotTypeConfiguration {
@@ -115,6 +116,7 @@ export enum Slots {
   HOSPITAL = "HOSPITAL",
   HERO_MANSION = "HERO'S_MANSION",
   TRAPPER = "TRAPPER",
+  TOWN_HALL = "TOWN_HALL",
 }
 
 export enum PlanStatus {
@@ -125,7 +127,7 @@ export enum PlanStatus {
 
 export interface PlanItem {
   id: number;
-  slot: Slots;
+  slot: Slots | RSlots;
   level: number;
   status: PlanStatus;
 }
