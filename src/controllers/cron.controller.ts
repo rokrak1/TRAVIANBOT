@@ -1,114 +1,72 @@
 import { FastifyReply, FastifyRequest } from "fastify";
 import { controller, get, post } from "../decorators";
 import { travianStart } from "../services/travian.service";
-import { CronManager, CronIntervals, TravianAccountInfo } from "../utils/CronManager";
-import { supabase } from "../config/supabase";
-import { addCronJob } from "../services/cron.service";
+import { CronManager, CronIntervals } from "../utils/CronManager";
+import { addCronJob, fetchBotConfigurationBasedOnType } from "../services/cron.service";
 import { LoggerLevels, serverLogger } from "../config/logger";
-import { travianStop } from "../services/utils/database";
+import { BotType, travianStop } from "../services/utils/database";
 import { removeUserData } from "../services/utils";
-import { OasisAdditionalConfiguration } from "../services/jobs/oasisFarmer/types";
 
 const cronManager = CronManager.getInstance();
 
 interface StartRequestBody {
-  options: TravianAccountInfo;
-  interval: keyof typeof CronIntervals;
   botId: string;
-  name: string;
-  additionalConfiguration?: OasisAdditionalConfiguration;
   run?: boolean;
+  botType: BotType;
 }
-
-interface Proxy {
-  id: string;
-  proxy_domain: string;
-  proxy_username: string;
-  proxy_password: string;
-  proxy_name: string;
-}
-
-interface BotConfiguration {
-  id: string;
-  travian_username: string;
-  travian_password: string;
-  travian_domain: string;
-  proxies: Proxy;
-}
-
-export interface Bot {
-  id: string;
-  bot_configuration: BotConfiguration;
-  image: string | null;
-  name: string;
-  created_at: string;
-  isRunning?: boolean;
-  interval: string;
-  type: string;
-}
-
-export const getSupabaseActiveJobAndStartWorkersWithCron = async () => {
-  const { data, error } = await supabase
-    .from("bots")
-    .select("*, bot_configuration(*, proxies(*))")
-    .eq("should_be_running", true);
-  if (error) {
-    console.error("Error fetching active jobs from supabase", error);
-    return;
-  }
-  if (!data) {
-    console.error("No active jobs found in supabase");
-    return;
-  }
-  for (let i = 0; i < data.length; i++) {
-    const bot: Bot = data[i];
-    const options: TravianAccountInfo = {
-      travianDomain: bot.bot_configuration.travian_domain,
-      travianPassword: bot.bot_configuration.travian_password,
-      travianUsername: bot.bot_configuration.travian_username,
-      proxyDomain: bot.bot_configuration.proxies.proxy_domain,
-      proxyPassword: bot.bot_configuration.proxies.proxy_password,
-      proxyUsername: bot.bot_configuration.proxies.proxy_username,
-      type: bot.type,
-    };
-
-    // TODO: Add additional configuration to database
-    const additionalConfiguration = {};
-    await addCronJob(bot, options, additionalConfiguration);
-  }
-};
 
 @controller("/cron")
 class CronController {
   @post("/start")
   async start(req: FastifyRequest, reply: FastifyReply) {
-    const { options, interval, botId, name, additionalConfiguration, run } = req.body as StartRequestBody;
+    const { botId, run, botType } = req.body as StartRequestBody;
+    const botConfig = await fetchBotConfigurationBasedOnType(botId, botType);
+
+    if (!botConfig) {
+      return reply.code(500).send({ status: "Error fetching bot configuration" });
+    }
+
+    const { options, config, name, configurationId } = botConfig;
+
+    if (!config) {
+      return reply.code(500).send({ status: "No configuration found for bot" });
+    }
+
+    if (!config.interval) {
+      return reply.code(500).send({ status: "No interval found for bot" });
+    }
 
     if (process.env.DEV_MODE) {
-      await travianStart(botId, options, additionalConfiguration);
+      console.log("stating browser");
+      await travianStart(botId, options, config.config);
       await serverLogger(LoggerLevels.INFO, `Cron job started for botId ${botId}`);
     } else {
-      await addCronJob({ id: botId, name, interval } as Bot, options, additionalConfiguration || {});
+      console.log("in cron job");
+      await addCronJob(
+        { botId, configurationId, name, interval: config.interval, botType },
+        options,
+        config.config || {}
+      );
 
       if (run && !process.env.DEV_MODE) {
         setTimeout(async () => {
-          await travianStart(botId, options, additionalConfiguration);
+          await travianStart(botId, options, config.config);
         }, 0);
       }
     }
 
     return reply.send({
-      status: `Cron job id ${botId} started with schedule ${CronIntervals[interval]}`,
+      status: `Cron job id ${botId} started with schedule ${CronIntervals[config.interval]}`,
     });
   }
 
   @post("/stop")
   async stop(req: FastifyRequest, reply: FastifyReply) {
-    const { botId } = req.body as { botId: string };
+    const { cronId } = req.body as { cronId: string };
 
-    cronManager.stop(botId);
-    await serverLogger(LoggerLevels.INFO, `Cron job ${botId} stopped`);
-    reply.send({ status: `Cron job ${botId} stopped` });
+    cronManager.stop(cronId);
+    await serverLogger(LoggerLevels.INFO, `Cron job ${cronId} stopped`);
+    reply.send({ status: `Cron job ${cronId} stopped` });
   }
 
   @post("/kill")
@@ -149,11 +107,11 @@ class CronController {
 
   @get("/status")
   async status(req: FastifyRequest, reply: FastifyReply) {
-    const { botId } = req.query as { botId: string };
+    const { cronId } = req.query as { cronId: string };
 
-    const isRunning = cronManager.running(botId);
-    const nextDate = cronManager.nextDate(botId);
-    const lastDate = cronManager.lastDate(botId);
+    const isRunning = cronManager.running(cronId);
+    const nextDate = cronManager.nextDate(cronId);
+    const lastDate = cronManager.lastDate(cronId);
     reply.send({
       lastDate,
       nextDate,
@@ -163,9 +121,9 @@ class CronController {
 
   @get("/info")
   async info(req: FastifyRequest, reply: FastifyReply) {
-    const { botId } = req.query as { botId: string };
+    const { cronId } = req.query as { cronId: string };
 
-    const job = cronManager.info(botId);
+    const job = cronManager.info(cronId);
     reply.send({ name: job.name, options: job.options });
   }
 
@@ -173,11 +131,11 @@ class CronController {
   async list(req: FastifyRequest, reply: FastifyReply) {
     const jobs = cronManager.list();
     const jobsDetails = Object.keys(jobs).map((k) => {
-      const botId = jobs[k].botId;
+      const cronId = jobs[k].cronId;
       const options = { ...jobs[k].options };
       return {
         name: jobs[k].name,
-        botId: botId,
+        cronId: cronId,
         options,
         interval: jobs[k].interval,
       };

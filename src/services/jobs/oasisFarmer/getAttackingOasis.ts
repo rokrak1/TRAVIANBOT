@@ -1,5 +1,6 @@
 import { Page } from "puppeteer";
-import { delay } from "../../../utils";
+import { delay, randomBoundingBoxClickCoordinates } from "../../../utils";
+import WindMouse from "../../funcs/windMouse";
 
 const getOnlyUrl = (url: string) => {
   return "https://" + url.split("//")[1].split("/")[0];
@@ -35,7 +36,21 @@ const fetchAllAttackingOasis = async (page: Page) => {
 
 export const getAllAttackingOasis = async (page: Page, travianDomain: string) => {
   const cleanUrl = getOnlyUrl(travianDomain);
-  await page.goto(cleanUrl + "/build.php?gid=16&tt=1&filter=2&subfilters=4");
+
+  const outgoingAttacks = "a[href='/build.php?gid=16&tt=1&filter=2&subfilters=4']";
+  const outgoingAttacksButton = await page.$(outgoingAttacks);
+
+  if (!outgoingAttacksButton) {
+    await page.goto(cleanUrl + "/build.php?gid=16&tt=1&filter=2&subfilters=4");
+  } else {
+    const bboxOutgoingAttacks = await outgoingAttacksButton.boundingBox();
+    if (bboxOutgoingAttacks) {
+      const { x, y } = randomBoundingBoxClickCoordinates(bboxOutgoingAttacks);
+      await WindMouse.getInstance().mouseMoveAndClick(page, x, y);
+    } else {
+      await outgoingAttacksButton.click();
+    }
+  }
 
   const allAttackingOasis = [];
   while (true) {

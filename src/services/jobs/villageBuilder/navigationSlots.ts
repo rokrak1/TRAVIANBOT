@@ -1,5 +1,7 @@
 import { Page } from "puppeteer";
 import { LoggerLevels } from "../../../config/logger";
+import WindMouse from "../../funcs/windMouse";
+import { randomBoundingBoxClickCoordinates, randomCenteredBoundingBoxClickCoordinates } from "../../../utils";
 
 export enum NavigationTypes {
   RESOURCES = "resources",
@@ -15,62 +17,68 @@ export enum NavigationTypes {
   HERO = "heroImageButton",
 }
 
+const moveMouseAndClick = async (page: Page, selector: string, waitForSelector?: string, centerBox?: boolean) => {
+  const mouse = WindMouse.getInstance();
+  const element = await page.waitForSelector(selector);
+  if (!element) {
+    await page.logger(LoggerLevels.ERROR, `Element ${selector} not found`);
+    return;
+  }
+  const bbox = await element.boundingBox();
+  if (!bbox) {
+    await page.logger(LoggerLevels.ERROR, `No bounding box found for ${selector}`);
+    await page.click(selector);
+    return;
+  }
+
+  const randomBoundingBoxFunction = centerBox
+    ? randomCenteredBoundingBoxClickCoordinates
+    : randomBoundingBoxClickCoordinates;
+  const { x, y } = randomBoundingBoxFunction(bbox);
+  await mouse.mouseMoveAndClick(page, x, y);
+
+  if (waitForSelector) {
+    try {
+      await page.waitForSelector(waitForSelector);
+    } catch (e) {
+      await page.logger(LoggerLevels.ERROR, `Waiting for ${waitForSelector} failed`);
+      return;
+    }
+  }
+};
+
 export const navigationSlots = {
   [NavigationTypes.RESOURCES]: async (page: Page) => {
-    await page.click("#navigation .village.resourceView");
-    try {
-      await page.waitForSelector("#resourceFieldContainer");
-    } catch (e) {
-      await page.logger(
-        LoggerLevels.ERROR,
-        "waiting for #resourceFieldContainer failed.."
-      );
-      return;
-    }
+    await moveMouseAndClick(page, "#navigation .village.resourceView", "#resourceFieldContainer");
   },
   [NavigationTypes.TOWN]: async (page: Page) => {
-    await page.click("#navigation .village.buildingView");
-    try {
-      await page.waitForSelector("#villageContent");
-    } catch (e) {
-      await page.logger(
-        LoggerLevels.ERROR,
-        "waiting for #villageContent failed.."
-      );
-      return;
-    }
+    await moveMouseAndClick(page, "#navigation .village.buildingView", "#villageContent");
   },
   [NavigationTypes.MAP]: async (page: Page) => {
-    try {
-      await page.waitForSelector("a.map", { visible: true });
-    } catch (e) {
-      await page.logger(LoggerLevels.ERROR, "waiting for a.map failed..");
-      return;
-    }
-    await page.click("a.map");
+    await moveMouseAndClick(page, "a.map");
   },
   [NavigationTypes.STATISTICS]: async (page: Page) => {
-    await page.click("#navigation a.statistics");
+    await moveMouseAndClick(page, "#navigation a.statistics");
   },
   [NavigationTypes.REPORTS]: async (page: Page) => {
-    await page.click("#navigation a.reports");
+    await moveMouseAndClick(page, "#navigation a.reports");
   },
   [NavigationTypes.MESSAGES]: async (page: Page) => {
-    await page.click("#navigation a.messages");
+    await moveMouseAndClick(page, "#navigation a.messages");
   },
   [NavigationTypes.DAILY_QUESTS]: async (page: Page) => {
-    await page.click("#navigation a.dailyQuests");
+    await moveMouseAndClick(page, "#navigation a.dailyQuests");
   },
   [NavigationTypes.QUEST_MASTER]: async (page: Page) => {
-    await page.click("#questmasterButton");
+    await moveMouseAndClick(page, "#questmasterButton", undefined, true);
   },
   [NavigationTypes.ADVENTURES]: async (page: Page) => {
-    await page.click("#topBarHero .adventure.green");
+    await moveMouseAndClick(page, "#topBarHero .adventure.green");
   },
   [NavigationTypes.AUCTION]: async (page: Page) => {
-    await page.click("#topBarHero .auction.green");
+    await moveMouseAndClick(page, "#topBarHero .auction.green");
   },
   [NavigationTypes.HERO]: async (page: Page) => {
-    await page.click("#heroImageButton");
+    await moveMouseAndClick(page, "#heroImageButton");
   },
 };

@@ -1,15 +1,16 @@
-import puppeteer, { Browser } from "puppeteer";
+import puppeteer, { Browser, Page } from "puppeteer";
 import { createLogger } from "../../config/logger";
 import { bypassRecaptcha } from "./bypassRecaptcha";
+import { Proxy, TravianBotSettings } from "../../utils/CronManager";
+import { ProxySupabase } from "../../types/main.types";
 
 export const userAgent =
   "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/111.0.0.0 Safari/537.36";
 const serverArgs = process.env.DEV_MODE ? [] : ["--no-zygote", "--single-process"];
 
 interface BrowserConfiguration {
-  proxyUsername?: string;
-  proxyPassword?: string;
   botId: string;
+  proxies: Proxy[];
 }
 
 export class BrowserInstance {
@@ -26,46 +27,80 @@ export class BrowserInstance {
     return BrowserInstance.instance;
   }
 
-  public async init(botId: string, proxyUsername?: string, proxyPassword?: string) {
+  public async getPages() {
+    return await this.browser!.pages();
+  }
+
+  private getAppropriateProxy(): Proxy {
+    const proxies = this.browserConfiguration.proxies;
+    const currentUtcHour = new Date().getUTCHours();
+
+    for (const proxy of proxies) {
+      const { from, to } = proxy.proxy_timezones;
+
+      if (from <= to) {
+        // Standard time range
+        if (currentUtcHour >= from && currentUtcHour < to) {
+          return proxy;
+        }
+      } else {
+        // Wrap around time range
+        if (currentUtcHour >= from || currentUtcHour < to) {
+          return proxy;
+        }
+      }
+    }
+
+    return proxies[0];
+  }
+
+  public async init(botId: string, travianBotSettings: TravianBotSettings) {
     if (this.browser) {
       return;
     }
 
+    this.browserConfiguration = {
+      botId,
+      proxies: travianBotSettings.proxies,
+    };
+
+    const { id: proxyId } = this.getAppropriateProxy();
+
     this.browser = await puppeteer.launch({
       ...(process.env.DEV_MODE && { headless: false }),
-      userDataDir: `./user_data/${botId}`,
-      args: [`--window-size=1280,1024`, "--no-sandbox", "--disabled-setupid-sandbox", ...serverArgs],
+      userDataDir: `./user_data/${proxyId}`,
+      args: [`--window-size=1920,1080`, "--no-sandbox", "--disabled-setupid-sandbox", ...serverArgs],
       defaultViewport: {
-        width: 1280,
-        height: 1024,
+        width: 1920,
+        height: 1080,
       },
     });
 
-    this.browserConfiguration = {
-      botId,
-      proxyUsername,
-      proxyPassword,
-    };
+    // Return first page
+    const pages = await this.browser.pages();
+    return this.createPage(pages[0]);
   }
 
-  public async createPage() {
+  public async createPage(existingPage?: Page) {
     if (!this.browser) {
       throw new Error("Browser is not initialized");
     }
 
-    const { botId, proxyUsername, proxyPassword } = this.browserConfiguration;
+    const { botId } = this.browserConfiguration;
 
-    const page = await this.browser.newPage();
+    const { proxy_username, proxy_password } = this.getAppropriateProxy();
+
+    const page = existingPage || (await this.browser.newPage());
 
     await page.setUserAgent(userAgent);
     // Create new logger based on botId
     page.logger = await createLogger(botId);
 
-    if (proxyUsername && proxyPassword) {
+    if (proxy_username && proxy_password) {
       // Set up proxy
       await page.authenticate({
-        username: proxyUsername,
-        password: proxyPassword,
+        username: proxy_username,
+        password: proxy_password,
       });
     }
 

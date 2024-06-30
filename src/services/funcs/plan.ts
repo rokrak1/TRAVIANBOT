@@ -1,33 +1,26 @@
 import { supabase } from "../../config/supabase";
-import { Slots } from "../jobs/villageBuilder/csvSlots";
-
-export enum PlanStatus {
-  UPGRADING = "UPGRADING",
-  DONE = "DONE",
-  WAITING = "WAITING",
-}
-
-export interface PlanItem {
-  id: number;
-  slot: Slots;
-  level: number;
-  status: PlanStatus;
-}
+import { PlanItem, PlanStatus, VillageConfiguration } from "../../types/main.types";
 
 export class PlanSingelton {
   private static instance: PlanSingelton;
-  private botId: string;
+  private configurationId: string;
   private plan: PlanItem[];
+  private planIndex: number = 0;
+  private village_configuration: VillageConfiguration;
 
-  private constructor(botId: string, plan: PlanItem[] = []) {
-    this.plan = plan;
-    this.botId = botId;
+  private constructor(configurationId: string, village_configuration: VillageConfiguration, planIndex: number = 0) {
+    this.village_configuration = village_configuration;
+    this.plan = village_configuration.config[planIndex].plan;
+    this.configurationId = configurationId;
+    this.planIndex = 0;
   }
 
-  public static createInstance(botId: string, plan: PlanItem[]) {
-    if (!PlanSingelton.instance) {
-      PlanSingelton.instance = new PlanSingelton(botId, plan);
-    }
+  public static createInstance(
+    configurationId: string,
+    village_configuration: VillageConfiguration,
+    planIndex: number = 0
+  ) {
+    PlanSingelton.instance = new PlanSingelton(configurationId, village_configuration, planIndex);
     return PlanSingelton.instance;
   }
 
@@ -41,14 +34,25 @@ export class PlanSingelton {
 
   public async updateStatus(planId: number, status: PlanStatus) {
     try {
+      console.log("Updating status", planId, status);
       const planItem = this.plan.find((item) => item.id === planId);
       if (planItem) {
         planItem.status = status;
       }
+
+      const newConfig = this.village_configuration.config.map((conf, i) => {
+        if (i === this.planIndex) {
+          conf.plan = this.plan;
+        }
+        return conf;
+      });
+      console.log(newConfig);
+      this.village_configuration.config = newConfig;
+
       const { data, error } = await supabase
-        .from("bots")
-        .update({ plan: this.plan })
-        .eq("id", this.botId);
+        .from("bot_configuration")
+        .update({ village_configuration: this.village_configuration })
+        .eq("id", this.configurationId);
       if (error) {
         throw error;
       }

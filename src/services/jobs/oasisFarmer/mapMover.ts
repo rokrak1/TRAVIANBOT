@@ -1,10 +1,12 @@
 import { Page } from "puppeteer";
-import { delay } from "../../../utils";
+import { BBox, delay, randomBoundingBoxClickCoordinates } from "../../../utils";
 import { humanLikeMouseMove } from "./humanLikeMove";
 import { allAttackingOasis, oases, troopsConfig } from "./allTroops";
 import { LoggerLevels } from "../../../config/logger";
 import { createNewPageAndExecuteRaid } from "./executeRaid";
 import { OasisPosition, OasisType } from "./fetchOasis";
+import WindMouse from "../../funcs/windMouse";
+import { getRandomInt } from "./oasisUtils";
 
 enum Moves {
   UP = "up",
@@ -29,35 +31,20 @@ interface MapInfo {
  * - After moving it returns the cursor to the center
  */
 
-const moveMouseAcrossMap = async (
-  page: Page,
-  centerX: number,
-  centerY: number,
-  mapWidth: number,
-  mapX: number,
-  mapHeight: number,
-  mapY: number,
-  offset: number
-) => {
-  await humanLikeMouseMove(page, centerX, centerY, mapX + offset, mapY + offset, false);
-  await humanLikeMouseMove(page, mapX + offset, mapY + offset, mapX + offset, mapY + mapHeight - offset, false);
-  await humanLikeMouseMove(
-    page,
-    mapX + offset,
-    mapY + mapHeight - offset,
-    mapX + mapWidth - offset,
-    mapY + offset,
-    false
-  );
-  await humanLikeMouseMove(
-    page,
-    mapX + mapWidth - offset,
-    mapY + offset,
-    mapX + mapWidth - offset,
-    mapY + mapHeight - offset,
-    false
-  );
-  await humanLikeMouseMove(page, mapX + mapWidth - offset, mapY + mapHeight - offset, centerX, centerY, false);
+const moveMouseAcrossMap = async (page: Page, centerX: number, centerY: number, mouse: WindMouse) => {
+  const xMinPos = getRandomInt(100, 150);
+  const yMinPos = getRandomInt(100, 150);
+
+  const mouseMoveArray = [
+    [centerX - xMinPos, centerY - yMinPos],
+    [centerX + xMinPos, centerY + yMinPos],
+  ];
+
+  const shuffledMoves = mouseMoveArray.sort(() => Math.random() - 0.5);
+  for (const move of shuffledMoves) {
+    await mouse.mouseMove(page, move[0], move[1]);
+    await delay(600, 800);
+  }
 };
 
 const moveMap = async (
@@ -66,44 +53,42 @@ const moveMap = async (
   { mapHeight, mapWidth, mapX, mapY, centerX, centerY }: MapInfo,
   isAlreadyExplored: boolean
 ) => {
+  const mouse = WindMouse.getInstance();
   const offSet = 10;
   switch (move) {
     case Moves.UP:
       const upX = centerX + 25;
       const upY = mapY + offSet;
-      await humanLikeMouseMove(page, centerX, centerY, upX, upY, false);
-      await humanLikeMouseMove(page, upX, upY, upX, mapY + mapHeight - offSet, true);
-      await humanLikeMouseMove(page, upX, mapY + mapHeight - offSet, centerX, centerY, false);
+      await mouse.mouseMove(page, upX, upY);
+      await mouse.mouseMove(page, upX, mapY + mapHeight - offSet, true);
       break;
     case Moves.DOWN:
       const downX = centerX + 25;
       const downY = mapY + mapHeight - offSet;
-      await humanLikeMouseMove(page, centerX, centerY, downX, downY, false);
-      await humanLikeMouseMove(page, downX, downY, downX, mapY + offSet, true);
-      await humanLikeMouseMove(page, downX, mapY + offSet, centerX, centerY, false);
+      await mouse.mouseMove(page, downX, downY);
+      await mouse.mouseMove(page, downX, mapY + offSet, true);
 
       break;
     case Moves.LEFT:
-      await humanLikeMouseMove(page, centerX, centerY, mapX + offSet, centerY, false);
-      await humanLikeMouseMove(page, mapX + offSet, centerY, mapX + mapWidth - offSet, centerY, true);
-      await humanLikeMouseMove(page, mapX + mapWidth - offSet, centerY, centerX, centerY, false);
+      await mouse.mouseMove(page, mapX + offSet, centerY);
+      await mouse.mouseMove(page, mapX + mapWidth - offSet, centerY, true);
       break;
     case Moves.RIGHT:
-      await humanLikeMouseMove(page, centerX, centerY, mapX + mapWidth - offSet, centerY, false);
-      await humanLikeMouseMove(page, mapX + mapWidth - offSet, centerY, mapX + offSet, centerY, true);
-      await humanLikeMouseMove(page, mapX + offSet, centerY, centerX, centerY, false);
+      await mouse.mouseMove(page, mapX + mapWidth - offSet, centerY);
+      await mouse.mouseMove(page, mapX + offSet, centerY, true);
       break;
     case Moves.CENTER:
-      await moveMouseAcrossMap(page, centerX, centerY, mapWidth, mapX, mapHeight, mapY, offSet);
+      await moveMouseAcrossMap(page, centerX, centerY, mouse);
   }
   if (isAlreadyExplored || move === Moves.CENTER) return;
-  await moveMouseAcrossMap(page, centerX, centerY, mapWidth, mapX, mapHeight, mapY, offSet);
+  await moveMouseAcrossMap(page, centerX, centerY, mouse);
 };
 
 const findClosestUnvisitedPositionWithDirections = (currentX: number, currentY: number, grid: string[][]) => {
   let closest = null;
   let minDist = Infinity;
   let directions = [Moves.CENTER];
+  let closestPositions: any[] = [];
 
   if (grid[currentY][currentX] === "?") return { closest: { x: currentX, y: currentY }, directions };
 
@@ -113,43 +98,56 @@ const findClosestUnvisitedPositionWithDirections = (currentX: number, currentY: 
         const dist = Math.abs(currentX - x) + Math.abs(currentY - y);
         if (dist < minDist) {
           minDist = dist;
-          closest = { x, y };
-
-          // Calculate directions
-          directions = [];
-          let tempX = currentX;
-          let tempY = currentY;
-
-          while (tempX !== x || tempY !== y) {
-            if (tempX < x) {
-              directions.push(Moves.RIGHT);
-              tempX++;
-            } else if (tempX > x) {
-              directions.push(Moves.LEFT);
-              tempX--;
-            }
-
-            if (tempY < y) {
-              directions.push(Moves.DOWN);
-              tempY++;
-            } else if (tempY > y) {
-              directions.push(Moves.UP);
-              tempY--;
-            }
-          }
+          closestPositions = [{ x, y }];
+        } else if (dist === minDist) {
+          closestPositions.push({ x, y });
         }
+      }
+    }
+  }
+
+  if (closestPositions.length > 0) {
+    closest = closestPositions[Math.floor(Math.random() * closestPositions.length)];
+
+    // Calculate directions
+    directions = [];
+    let tempX = currentX;
+    let tempY = currentY;
+
+    while (tempX !== closest.x || tempY !== closest.y) {
+      const possibleMoves = [];
+
+      if (tempX < closest.x) possibleMoves.push(Moves.RIGHT);
+      if (tempX > closest.x) possibleMoves.push(Moves.LEFT);
+      if (tempY < closest.y) possibleMoves.push(Moves.DOWN);
+      if (tempY > closest.y) possibleMoves.push(Moves.UP);
+
+      const move = possibleMoves[Math.floor(Math.random() * possibleMoves.length)];
+
+      switch (move) {
+        case Moves.RIGHT:
+          directions.push(Moves.RIGHT);
+          tempX++;
+          break;
+        case Moves.LEFT:
+          directions.push(Moves.LEFT);
+          tempX--;
+          break;
+        case Moves.DOWN:
+          directions.push(Moves.DOWN);
+          tempY++;
+          break;
+        case Moves.UP:
+          directions.push(Moves.UP);
+          tempY--;
+          break;
       }
     }
   }
 
   return { closest, directions };
 };
-interface BBox {
-  x: number;
-  y: number;
-  width: number;
-  height: number;
-}
+
 interface VisibleValue {
   bbox: BBox;
   width: number;
@@ -370,7 +368,11 @@ const compareValuesAndClickOasis = async (
 
     for (const clickableSquare of clickableSquares) {
       if (oasis.position.x === clickableSquare.x && oasis.position.y === clickableSquare.y && !oasis.wasSend) {
-        await page.mouse.click(clickableSquare.clickPosition.x, clickableSquare.clickPosition.y);
+        await WindMouse.getInstance().mouseMoveAndClick(
+          page,
+          clickableSquare.clickPosition.x,
+          clickableSquare.clickPosition.y
+        );
         await delay(1000, 1200);
 
         const raidStatus = await createNewPageAndExecuteRaid(page, oasis);
@@ -384,12 +386,18 @@ const compareValuesAndClickOasis = async (
         }
 
         if (raidStatus.terminateOasis && !terminatedOasis.includes(raidStatus.terminateOasis)) {
-          console.log("pushing");
           terminatedOasis.push(raidStatus.terminateOasis);
         }
-
         await page.logger(raidStatus.status, raidStatus.message);
-        await getCloseButton.click();
+        const bbox = await getCloseButton.boundingBox();
+        if (!bbox) {
+          await page.logger(LoggerLevels.ERROR, "No bounding box found");
+          console.log("No bounding box found");
+          await getCloseButton.click();
+          continue;
+        }
+        const { x, y } = randomBoundingBoxClickCoordinates(bbox);
+        await WindMouse.getInstance().mouseMoveAndClick(page, x, y);
         await delay(1000, 1100);
       }
     }

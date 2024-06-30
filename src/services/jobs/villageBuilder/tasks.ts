@@ -4,9 +4,10 @@ import { clickNavigationSlot } from "../travianActions/clicker";
 import { NavigationTypes } from "./navigationSlots";
 import { LoggerLevels } from "../../../config/logger";
 import { Slots } from "./csvSlots";
-import { upgradeFields } from "./fields_builder";
+import { upgradeFields, upgradeSingleField } from "./fields_builder";
 import { upgradeBuilding } from "./town_builder";
-import { PlanItem, PlanStatus } from "../../funcs/plan";
+import { PlanItem, PlanStatus } from "../../../types/main.types";
+import { RSlots } from "./resourcesSlots";
 
 const getArrayOfConstructions = async (page: Page): Promise<number[]> => {
   const url = page.url();
@@ -21,10 +22,7 @@ const getArrayOfConstructions = async (page: Page): Promise<number[]> => {
   const buildingListTime = [0, 0];
   try {
     for (let i = 0; i < currentBuildingList.length; i++) {
-      const getTime = await currentBuildingList[i].$eval(
-        ".timer",
-        (el) => el?.textContent || "0"
-      );
+      const getTime = await currentBuildingList[i].$eval(".timer", (el) => el?.textContent || "0");
       const timeInSeconds = timeToSeconds(getTime);
       buildingListTime[i] = timeInSeconds;
     }
@@ -51,17 +49,11 @@ export const startBuildingByPlan = async (page: Page, plan: PlanItem[]) => {
       continue;
     }
 
-    await page.logger(
-      LoggerLevels.INFO,
-      `Starting plan: ${plan[planIndex].slot}, to level: ${plan[planIndex].level}`
-    );
+    await page.logger(LoggerLevels.INFO, `Starting plan: ${plan[planIndex].slot}, to level: ${plan[planIndex].level}`);
 
     // Check if there are already 2 constructions
     const [time1, time2] = await getArrayOfConstructions(page);
-    const underConstructionNumber = [time1, time2].reduce(
-      (acc, curr) => (curr > 0 ? acc + 1 : acc + 0),
-      0
-    );
+    const underConstructionNumber = [time1, time2].reduce((acc, curr) => (curr > 0 ? acc + 1 : acc + 0), 0);
     if (time1 > 0 && time2 > 0) {
       await page.logger(LoggerLevels.INFO, "There are already 2 constructions");
       console.log("There are already 2 constructions");
@@ -70,11 +62,9 @@ export const startBuildingByPlan = async (page: Page, plan: PlanItem[]) => {
     }
 
     // Start building upgrades
-    const [endLoop, freezeIndex] = await proceedWithUpgrades(
-      page,
-      row,
-      underConstructionNumber
-    );
+    const [endLoop, freezeIndex] = await proceedWithUpgrades(page, row, underConstructionNumber);
+    console.log("endLoop", endLoop);
+    console.log("freezeIndex", freezeIndex);
     if (endLoop) {
       earlyBreak = true;
       await page.logger(LoggerLevels.INFO, "End loop");
@@ -99,16 +89,16 @@ export const startBuildingByPlan = async (page: Page, plan: PlanItem[]) => {
  *
  */
 
-const proceedWithUpgrades = async (
-  page: Page,
-  row: PlanItem,
-  underConstructionNumber: number
-): Promise<any[]> => {
+const proceedWithUpgrades = async (page: Page, row: PlanItem, underConstructionNumber: number): Promise<any[]> => {
   // RESOURCES
+  const isResourceSlot = Object.values(RSlots).includes(row.slot as RSlots);
   if (row.slot === Slots.ALL_FIELDS) {
     return [await upgradeFields(page, row, underConstructionNumber), false];
-    // TOWN
-  } else {
+  } else if (isResourceSlot) {
+    return await upgradeSingleField(page, row, underConstructionNumber, row.slot as RSlots);
+  }
+  // TOWN
+  else {
     return await upgradeBuilding(page, row);
   }
 };

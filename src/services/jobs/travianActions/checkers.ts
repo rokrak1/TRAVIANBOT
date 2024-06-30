@@ -1,8 +1,5 @@
 import { Page } from "puppeteer";
-import {
-  checkIfDailyQuestCompleted,
-  checkIfQuestCompleted,
-} from "../villageBuilder/quests";
+import { checkIfDailyQuestCompleted, checkIfQuestCompleted } from "../villageBuilder/quests";
 import { goToClosestAdventureIfExsists, levelupHero } from "./hero";
 import { extendGoldPlanAndResources } from "./gold";
 import { extendProtection } from "./protection";
