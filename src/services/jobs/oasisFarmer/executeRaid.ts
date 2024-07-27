@@ -7,6 +7,7 @@ import { OasisPosition, OasisType } from "./fetchOasis";
 import { LoggerLevels } from "../../../config/logger";
 import { BrowserInstance } from "../../funcs/browserConfiguration";
 import WindMouse from "../../funcs/windMouse";
+import { MIN_CAVALRY, MIN_INFANTRY } from "../../utils/constants";
 
 export interface OasisRaidConfiguration extends OasisPosition {
   requiredTroops: number;
@@ -220,6 +221,8 @@ export const executeOasisRaid = async (page: Page, raidConfiguration: OasisRaidC
     };
 
   const parsedCount = parseValue(troopCount);
+
+  //
   const minTroopCount = attackingTroop.type === "infantry" ? 500 : 60;
 
   if (parsedCount < minTroopCount)
@@ -245,7 +248,7 @@ export const executeOasisRaid = async (page: Page, raidConfiguration: OasisRaidC
       message: "OASIS - input field not found",
     };
 
-  const minViableTroops = attackingTroop.type === "infantry" ? 500 : 60;
+  const minViableTroops = attackingTroop.type === "infantry" ? MIN_INFANTRY : MIN_CAVALRY;
   const troopsToSend = requiredTroops < minViableTroops ? minViableTroops : requiredTroops;
 
   const inputBbox = await inputField.boundingBox();
