@@ -1,17 +1,35 @@
 # TRAVCIBOT API
 
-1. Install dependencies `npm install`
-2. Set .env DEV_MODE to "true" `DEV_MODE=TRUE`, to avoid running workers and cron job
-3. Run server `npm start`
+## Initial Setup
 
-## If you want to run workers locall run it with:
+1. Clone the repository
+2. Run the `db.sql` script in your Supabase project's SQL Editor to set up the database structure
+3. Update the `.env` file with your Supabase URL and API key:
 
-### Docker
-1. Place yourself in root folder
-2. `docker build -t travcibot .`
-3. `docker run -d --restart=always --name travcibot -p 8000:8000 -v /var/run/docker.sock:/var/run/docker.sock travcibot`
+## Local Development
 
-### No docker
-1. Place yourself in root folder
-2. `npx tsx`
-3. `node dist/app.js`
+1. Install dependencies: `npm install`
+2. Set `DEV_MODE` to "true" in the `.env` file to avoid running workers and cron jobs:
+3. Run the server: `npm start`
+
+## Running Workers Locally
+
+### Using Docker
+
+1. Navigate to the root folder
+2. Build the Docker image:
+
+- `docker build -t travcibot .`
+- `docker run -d --restart=always --name travcibot -p 8000:8000 -v /var/run/docker.sock:/var/run/docker.sock travcibot`
+
+### Without Docker
+
+1. Navigate to the root folder
+2. Compile TypeScript:
+
+- `npx tsx`
+- `node dist/app.js`
+
+## Note
+
+Ensure that you have set up your Supabase project and have the necessary credentials before running the application. The `db.sql` script should be executed in your Supabase project to create the required database structure.
