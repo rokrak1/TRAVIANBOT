@@ -34,7 +34,69 @@
 
 Ensure that you have set up your Supabase project and have the necessary credentials before running the application. The `db.sql` script should be executed in your Supabase project to create the required database structure.
 
-## Feature: Oasis Farmer
+# TRAVCIBOT Features
+
+## Village Builder
+
+The Village Builder is an advanced automation feature designed to efficiently develop your Travian villages according to a pre-defined plan.
+
+### Key Features:
+
+1. **Multi-Village Support**: Can manage and develop multiple villages simultaneously.
+2. **Customizable Building Plans**: Users can create detailed plans for each village, specifying which buildings to construct and to what level.
+3. **Resource Field Upgrades**: Automatically upgrades resource fields (wood, clay, iron, crop) based on the plan.
+4. **Town Building Construction**: Handles the construction and upgrading of various buildings within the village.
+5. **Intelligent Resource Management**: Checks resource availability and can use hero resources if necessary to complete constructions.
+6. **Queue Management**: Maintains two active construction queues, optimizing building efficiency.
+7. **Progress Tracking**: Keeps track of the building progress and updates the plan status accordingly.
+8. **Error Handling**: Robust error handling to manage unexpected situations and ensure continued operation.
+9. **Human-like Behavior**: Implements delays and random actions to mimic human-like behavior and reduce detection risk.
+
+### How It Works:
+
+1. The bot loads the predefined plan for each village.
+2. It checks the current state of constructions in the village.
+3. Following the plan, it attempts to start new constructions if slots are available.
+4. For each planned upgrade:
+   - It navigates to the appropriate view (resources or town).
+   - Checks if the upgrade is possible (resources, prerequisites).
+   - Initiates the upgrade if conditions are met.
+   - Updates the plan status.
+5. The process repeats until the plan is completed or no further actions are possible.
+
+## Oasis Farmer
+
+The Oasis Farmer is a sophisticated feature designed to automate the process of raiding oases for resources.
+
+### Key Features:
+
+1. **Intelligent Map Exploration**: Uses a 2D grid system to efficiently explore the game map, avoiding redundant movements.
+2. **Data Interception**: Captures game data in real-time by intercepting API responses, allowing for up-to-date information on oasis locations and types.
+3. **Targeted Raiding**: Focuses on high-value oases (e.g., "rich" and "wood" types) to maximize resource gain.
+4. **Anti-Detection Measures**: Employs human-like mouse movements and variable delays between actions to mimic natural player behavior.
+5. **Customizable Parameters**: Allows users to set exploration boundaries and select troop types for raiding.
+6. **Automatic Troop Management**: Keeps track of ongoing attacks to prevent over-commitment of troops.
+
+### How It Works:
+
+1. The bot starts by fetching already attacking oases to avoid duplicate attacks.
+2. It then navigates to the game map and retrieves map information.
+3. The map is zoomed out for a broader view.
+4. Attacking troops are configured based on the player's tribe and selected units.
+5. An exploration grid is created based on user-defined parameters.
+6. The bot systematically moves across the map, exploring unexplored areas.
+7. As it explores, it identifies suitable oases for attack, considering their type and value.
+8. Raids are executed on chosen oases, with the bot managing troop assignments and attack timing.
+9. The process continues until the exploration area is fully covered or other termination conditions are met.
+
+### Usage:
+
+To use these features:
+
+1. For the Village Builder, create a building plan for each village you want to develop.
+2. For the Oasis Farmer, set your desired exploration parameters and troop configurations.
+3. Configure the bot with your Travian account details and the respective plans/settings.
+4. Start the bot and let it automatically develop your villages and farm oases according to your specifications.
 
 ### Minimum Viable Troops for Oasis Raids
 
@@ -47,33 +109,6 @@ To adjust this number:
 
 Increasing this value will send more troops, potentially reducing losses but using more resources. Decreasing it will send fewer troops, potentially increasing efficiency but also increasing the risk of losses.
 
-## How it works
+**Note:** This project was cooked up for fun and to flex some coding muscles. It's a cool demo of what you can do with web automation, but remember, using bots might not be cool with game admins. I'am not telling you what to do, but if you decide to take it for a spin, that's on you. Don't blame me if you get your account sent to the shadow realm 😛
 
-### Map Exploration and Data Fetching
-
-The Oasis Farmer uses a sophisticated system to explore the map and gather data about oases:
-
-### 2D Matrix Exploration
-
-1. A 2D matrix (grid) is created to represent the unexplored map area.
-2. The size of this grid is determined by user-defined parameters: maxTop, maxBottom, maxLeft, and maxRight.
-3. Each cell in the grid is initially marked with "?" to represent unexplored areas.
-4. The starting position is set at the center of this grid.
-
-### Map Movement
-
-1. The system moves across the map by updating the current position in the grid.
-2. It uses a path-finding algorithm to determine the most efficient route to the nearest unexplored cell.
-3. As areas are explored, their corresponding cells in the grid are marked with "x".
-4. The map movement is simulated using human-like mouse movements to avoid detection.
-
-### Data Fetching
-
-1. As the map moves, the system intercepts XHR requests to the game's API.
-2. Specifically, it captures responses from the "api/v1/map/position" endpoint.
-3. The intercepted data contains information about the tiles in the current view, including oasis details.
-4. This data is processed to extract information about new, unexplored oases.
-5. The system filters for "rich" and "wood" oases, which are typically the most valuable for farming.
-6. New oases that meet the criteria are added to a list for potential attacks.
-
-This exploration and data fetching process allows the Oasis Farmer to efficiently discover and target the most valuable oases while maintaining a human-like interaction pattern with the game interface.
+**P.S.** Use at least 3-4 proxies when running this bad boy. The more proxies, the merrier (and the less likely you are to get caught by big bad multihunter)! 🕵️‍♂️
